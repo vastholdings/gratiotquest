@@ -28,38 +28,38 @@ var players = {};
 
 //Add the WebSocket handlers
 io.on('connection', function(socket){
-  console.log('a user connected', socket.id);
+    console.log('a user connected', socket.id);
     socket.on('new player', function() {
-        x = Math.floor(Math.random()*1000);
-        y = Math.floor(Math.random()*800);
-	players[socket.id] = {
-	    x: x,
-	    y: y 
-	};
+        let x = Math.floor(Math.random()*1000);
+        let y = Math.floor(Math.random()*800);
+        players[socket.id] = {
+            x: x,
+            y: y 
+        };
         io.sockets.emit('initstate', [socket.id, x, y]);
     });
     socket.on('movement', function(data) {
-	var player = players[socket.id] || {};
-	if (data.left) {
-	    player.x -= 5;
-	}
-	if (data.up) {
-	    player.y -= 5;
-	}
-	if (data.right) {
-	    player.x += 5;
-	}
-	if (data.down) {
-	    player.y += 5;
-	}
+        var player = players[socket.id] || {};
+        if (data.left) {
+            player.x -= 5;
+        }
+        if (data.up) {
+            player.y -= 5;
+        }
+        if (data.right) {
+            player.x += 5;
+        }
+        if (data.down) {
+            player.y += 5;
+        }
     });
 
-    socket.on('startmove', function(data) {
-	var player = players[socket.id] || {};
+    socket.on('startmove', function() {
+        var player = players[socket.id] || {};
         player.moving = true;
     });
-    socket.on('endmove', function(data) {
-	var player = players[socket.id] || {};
+    socket.on('endmove', function() {
+        var player = players[socket.id] || {};
         player.moving = false;
     });
 
