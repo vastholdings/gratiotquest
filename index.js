@@ -28,9 +28,8 @@ var players = {};
 
 //Add the WebSocket handlers
 io.on('connection', function(socket){
-  console.log('a user connected');
+  console.log('a user connected', socket.id);
     socket.on('new player', function() {
-        console.log('herererere');
         x = Math.floor(Math.random()*1000);
         y = Math.floor(Math.random()*800);
 	players[socket.id] = {
@@ -56,7 +55,8 @@ io.on('connection', function(socket){
     });
 
     socket.on('disconnect', function(){
-        console.log('user disconnected');
+        delete players[socket.id];
+        console.log('user disconnected', socket.id);
     });
 });
     

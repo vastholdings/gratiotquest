@@ -98,11 +98,9 @@ async function setup(){
 function myRenderTileSetup() {
     if(gameStarted) {
         ctx.save();
-        console.log(playerid);
         let offsetX = allPlayers[playerid].x
         let offsetY = allPlayers[playerid].y
-        console.log(offsetX,offsetY);
-        ctx.translate(offsetX, offsetY);
+        ctx.translate(-offsetX+100, -offsetY+100);
         ctx.clearRect(0, 0, can.width, can.height);
         var renderedCount = 0;
         for(let y = 0; y < arrayWidth; y++){
@@ -212,11 +210,10 @@ setup();
 socket.emit('new player');
 
 setInterval(function() {
-    socket.emit('movement', keys);
+    socket.emit('movement', movement);
 }, 1000 / 60);
 
 socket.on('initstate', function(data) {
-    console.log('data',data);
     playerid = data[0];
     offsetX = data[1];
     offsetY = data[2];
