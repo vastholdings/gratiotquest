@@ -42,9 +42,9 @@ function draw() {
         clearInterval(timer);
         gameInitialized = true;
     }
-
+    
     Object.keys(allPlayers).forEach((player) => {
-        ctx.drawImage(bird[0], allPlayers[player].x, allPlayers[player].y, 100, 100);
+        ctx.drawImage(bird[frame], allPlayers[player].x, allPlayers[player].y, 100, 100);
     });
 }
 
@@ -98,8 +98,8 @@ async function setup(){
 function myRenderTileSetup() {
     if(gameStarted) {
         ctx.save();
-        let offsetX = allPlayers[playerid].x
-        let offsetY = allPlayers[playerid].y
+        let offsetX = allPlayers[playerid].x;
+        let offsetY = allPlayers[playerid].y;
         ctx.translate(-offsetX+100, -offsetY+100);
         ctx.clearRect(0, 0, can.width, can.height);
         var renderedCount = 0;
@@ -112,6 +112,9 @@ function myRenderTileSetup() {
             }
         }
         draw();
+        if(movement.left||movement.right||movement.up||movement.down) {
+            frame = Math.floor(((counter++) % 8)/4);
+        }
         ctx.restore();
     }
     else {
@@ -128,40 +131,40 @@ var movement = {
     down: false,
     left: false,
     right: false
-}
+};
 document.addEventListener('keydown', function(event) {
     switch (event.keyCode) {
-        case 37:
-            movement.left = true;
-            break;
-        case 38:
-            movement.up = true;
-            break;
-        case 39:
-            movement.right = true;
-            break;
-        case 40:
-            movement.down = true;
-            break;
-        case 32:
-            gameStarted = true;
-            break;
+    case 37:
+        movement.left = true;
+        break;
+    case 38:
+        movement.up = true;
+        break;
+    case 39:
+        movement.right = true;
+        break;
+    case 40:
+        movement.down = true;
+        break;
+    case 32:
+        gameStarted = true;
+        break;
     }
 });
 document.addEventListener('keyup', function(event) {
     switch (event.keyCode) {
-        case 37:
-            movement.left = false;
-            break;
-        case 38:
-            movement.up = false;
-            break;
-        case 39:
-            movement.right = false;
-            break;
-        case 40:
-            movement.down = false;
-            break;
+    case 37:
+        movement.left = false;
+        break;
+    case 38:
+        movement.up = false;
+        break;
+    case 39:
+        movement.right = false;
+        break;
+    case 40:
+        movement.down = false;
+        break;
     }
 });
 
