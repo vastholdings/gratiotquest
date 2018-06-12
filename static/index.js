@@ -1,4 +1,4 @@
-/* global var1, var2 */
+/* global io */
 
 
 let can = document.getElementById('canvas1');
@@ -126,9 +126,6 @@ function myRenderTileSetup() {
                 let pos = x + y * arrayWidth;
                 if(imageArray[pos] && imageArray[pos].complete){
                     ctx.drawImage(imageArray[pos],(pos%arrayWidth)*imageWidth, Math.floor(pos/arrayWidth)*imageHeight);
-                    //imageArray[pos] = undefined;
-                } else {
-                    renderedCount += 1;
                 }
             }
         }
