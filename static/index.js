@@ -1,19 +1,8 @@
+/* global var1, var2 */
+
+
 let can = document.getElementById('canvas1');
 var ctx = can.getContext('2d');
-
-var thingsOnMap = [
-    [50,50],
-    [55,70],
-    [15,22],
-    [150,20],
-    [120,80],
-    [100,10],
-    [170,40],
-    [130,70],
-    [230,10],
-    [330,45],
-    [250,65]
-];
 
 // player's position
 var playerX = 100;
@@ -102,7 +91,7 @@ async function setup(){
     for(var i = 0; i < images.length; i++) {
         var imageObj = new Image();
         imagesLoading[i] = new Promise((resolve) => {
-            imageObj.onload = function(pos) {
+            imageObj.onload = function() {
                 resolve(this);
             };
             imageObj.src = images[i];
