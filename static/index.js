@@ -11,7 +11,6 @@ var playerid;
 var allPlayers = {};
 
 // how far offset the canvas is
-let keys = [];
 let frame = 0;
 let counter = 0;
 let arrayWidth = 5;
@@ -21,30 +20,18 @@ let imageHeight = 1600;
 let imageArray = [];
 let bird = [];
 let gratiot;
-let gameStarted;
-let gameInitialized;
+let gameStarted = false;
 let timer;
-let hitmapContext;
 
  
 var socket = io();
 
 function draw() {
-    if(!gameStarted) {
-        ctx.drawImage(gratiot, 0, 0, 800, 600);
-        if(!timer) {
-            timer = setInterval(function() {
-                frame = (frame+1)%2;
-            }, 400);
-        }
-    }
-    else if(!gameInitialized) {
-        clearInterval(timer);
-        gameInitialized = true;
-    }
-    
     Object.keys(allPlayers).forEach((player) => {
-        ctx.drawImage(bird[frame], allPlayers[player].x, allPlayers[player].y, 100, 100);
+        if(allPlayers[player].moving) {
+            allPlayers[player].frame = Math.floor(((counter++) % 8) / 4);
+        }
+        ctx.drawImage(bird[allPlayers[player].frame||0], allPlayers[player].x, allPlayers[player].y, 100, 100);
     });
 }
 
@@ -66,7 +53,6 @@ async function setup(){
     images.push('img/bird0.png');
     images.push('img/bird1.png');
     images.push('img/gratiot.png');
-    images.push('img/hitmap.png');
 
     for(var i = 0; i < images.length; i++) {
         var imageObj = new Image();
@@ -84,12 +70,6 @@ async function setup(){
     bird[1] = imageArray[26];
     gratiot = imageArray[27];
 
-    var canvas = document.createElement('canvas');
-    hitmapContext = canvas.getContext('2d');
-    var img = imageArray[28];
-    canvas.width = img.width;
-    canvas.height = img.height;
-    hitmapContext.drawImage(img, 0, 0 );
     console.log('done loading');
     window.requestAnimationFrame(myRenderTileSetup);
 }
@@ -97,6 +77,7 @@ async function setup(){
 
 function myRenderTileSetup() {
     if(gameStarted) {
+        clearInterval(timer);
         ctx.save();
         let offsetX = allPlayers[playerid].x;
         let offsetY = allPlayers[playerid].y;
@@ -112,17 +93,17 @@ function myRenderTileSetup() {
             }
         }
         draw();
-        if(movement.left||movement.right||movement.up||movement.down) {
-            frame = Math.floor(((counter++) % 8)/4);
-        }
+        
         ctx.restore();
-    }
-    else {
-        if(keys[32]) {
-            gameStarted = true;
+    } else {
+        ctx.drawImage(gratiot, 0, 0, 800, 600);
+        if(!timer) {
+            timer = setInterval(function() {
+                frame = (frame+1)%2;
+            }, 400);
         }
-        draw();
     }
+    
     window.requestAnimationFrame(myRenderTileSetup);
 }
 
@@ -150,6 +131,9 @@ document.addEventListener('keydown', function(event) {
         gameStarted = true;
         break;
     }
+    if(movement.left||movement.up||movement.right||movement.down) {
+        socket.emit('startmove');
+    }
 });
 document.addEventListener('keyup', function(event) {
     switch (event.keyCode) {
@@ -166,49 +150,12 @@ document.addEventListener('keyup', function(event) {
         movement.down = false;
         break;
     }
+    if(!movement.left&&!movement.up&&!movement.right&&!movement.down) {
+        socket.emit('endmove');
+    }
 });
 
-// function whatKey() {
-//     let oldOffsetX = offsetX;
-//     let oldOffsetY = offsetY;
-//     let speed = 5;
-//     let check = false;
-//     if(keys[37]||keys['left']) {
-//         offsetX = Math.min(0, offsetX + speed);
-//         frame = Math.floor(((counter++) % 8)/4);
-//         check = true;
-//     }
-//     if(keys[39]||keys['right']) {
-//         offsetX = Math.max(-imageWidth*arrayWidth, offsetX - speed);
-//         frame = Math.floor(((counter++) % 8)/4);
-//         check = true;
-//     }
-//     if(keys[40]||keys['down']) {
-//         offsetY = Math.max(-imageHeight*arrayHeight, offsetY - speed);
-//         frame = Math.floor(((counter++) % 8)/4);
-//         check = true;
-//     }
-//     if(keys[38]||keys['up']) {
-//         offsetY = Math.min(0, offsetY + speed);
-//         frame = Math.floor(((counter++) % 8)/4);
-//         check = true;
-//     }
-//     if(keys[32]) {
-//         gameStarted = true;
-//     }
-//     if(check) {
-//         let coord = hitmapContext.getImageData(Math.floor(-offsetX/10+17), Math.floor(-offsetY/10+17), 1, 1);
-//         if(coord.data[2] == 221) {
-//             offsetX = oldOffsetX;
-//             offsetY = oldOffsetY;
-//         }
-//         console.log('here');
-//         socket.emit('chat message', [offsetX,offsetY]);
-//     }
-// }
-
 setup();
-
 
 socket.emit('new player');
 
@@ -218,8 +165,6 @@ setInterval(function() {
 
 socket.on('initstate', function(data) {
     playerid = data[0];
-    offsetX = data[1];
-    offsetY = data[2];
 });
 
 

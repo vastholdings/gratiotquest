@@ -54,6 +54,15 @@ io.on('connection', function(socket){
 	}
     });
 
+    socket.on('startmove', function(data) {
+	var player = players[socket.id] || {};
+        player.moving = true;
+    });
+    socket.on('endmove', function(data) {
+	var player = players[socket.id] || {};
+        player.moving = false;
+    });
+
     socket.on('disconnect', function(){
         delete players[socket.id];
         console.log('user disconnected', socket.id);
