@@ -5,8 +5,6 @@ let can = document.getElementById('canvas1');
 var ctx = can.getContext('2d');
 
 // player's position
-var playerX = 100;
-var playerY = 100;
 var playerid;
 var allPlayers = {};
 
@@ -83,7 +81,6 @@ function myRenderTileSetup() {
         let offsetY = allPlayers[playerid].y;
         ctx.translate(-offsetX+100, -offsetY+100);
         ctx.clearRect(0, 0, can.width, can.height);
-        var renderedCount = 0;
         for(let y = 0; y < arrayWidth; y++){
             for(let x = 0; x < arrayHeight; x++){
                 let pos = x + y * arrayWidth;
