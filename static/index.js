@@ -7,10 +7,10 @@ var ctx = can.getContext('2d');
 // player's position
 var playerX = 100;
 var playerY = 100;
+var playerid;
+var allPlayers = {};
 
 // how far offset the canvas is
-var offsetX = 0;
-var offsetY = 0;
 let keys = [];
 let frame = 0;
 let counter = 0;
@@ -28,10 +28,6 @@ let hitmapContext;
 
  
 var socket = io();
-socket.on('message', function(data) {
-    console.log(data);
-});
-
 
 function draw() {
     if(!gameStarted) {
@@ -44,29 +40,13 @@ function draw() {
     }
     else if(!gameInitialized) {
         clearInterval(timer);
-        ['left', 'right', 'up', 'down'].forEach(function (elt) {
-            let node = document.getElementById(elt);
-            ['mousedown', 'touchstart'].forEach(evt =>
-                node.addEventListener(evt, () => { keys[elt] = true; }, false)
-            );
-            ['mouseup', 'touchend', 'touchcancel'].forEach(evt =>
-                node.addEventListener(evt, () => { keys[elt] = false; }, false)
-            );
-        });
         gameInitialized = true;
     }
-    ctx.drawImage(bird[frame], playerX - offsetX, playerY - offsetY, 100, 100);
+
+    Object.keys(allPlayers).forEach((player) => {
+        ctx.drawImage(bird[0], allPlayers[player].x, allPlayers[player].y, 100, 100);
+    });
 }
-
-
-
-window.addEventListener('keydown', function (e) {
-    keys[e.keyCode] = true;
-});
-window.addEventListener('keyup', function (e) {
-    keys[e.keyCode] = false;
-});
-
 
 //stackoverflow
 function pad(n, width, z) {
@@ -118,6 +98,10 @@ async function setup(){
 function myRenderTileSetup() {
     if(gameStarted) {
         ctx.save();
+        console.log(playerid);
+        let offsetX = allPlayers[playerid].x
+        let offsetY = allPlayers[playerid].y
+        console.log(offsetX,offsetY);
         ctx.translate(offsetX, offsetY);
         ctx.clearRect(0, 0, can.width, can.height);
         var renderedCount = 0;
@@ -129,7 +113,6 @@ function myRenderTileSetup() {
                 }
             }
         }
-        whatKey();
         draw();
         ctx.restore();
     }
@@ -141,48 +124,107 @@ function myRenderTileSetup() {
     }
     window.requestAnimationFrame(myRenderTileSetup);
 }
-function whatKey() {
-    let oldOffsetX = offsetX;
-    let oldOffsetY = offsetY;
-    let speed = 5;
-    let check = false;
-    if(keys[37]||keys['left']) {
-        offsetX = Math.min(0, offsetX + speed);
-        frame = Math.floor(((counter++) % 8)/4);
-        check = true;
-    }
-    if(keys[39]||keys['right']) {
-        offsetX = Math.max(-imageWidth*arrayWidth, offsetX - speed);
-        frame = Math.floor(((counter++) % 8)/4);
-        check = true;
-    }
-    if(keys[40]||keys['down']) {
-        offsetY = Math.max(-imageHeight*arrayHeight, offsetY - speed);
-        frame = Math.floor(((counter++) % 8)/4);
-        check = true;
-    }
-    if(keys[38]||keys['up']) {
-        offsetY = Math.min(0, offsetY + speed);
-        frame = Math.floor(((counter++) % 8)/4);
-        check = true;
-    }
-    if(keys[32]) {
-        gameStarted = true;
-    }
-    if(check) {
-        let coord = hitmapContext.getImageData(Math.floor(-offsetX/10+17), Math.floor(-offsetY/10+17), 1, 1);
-        if(coord.data[2] == 221) {
-            offsetX = oldOffsetX;
-            offsetY = oldOffsetY;
-        }
-        console.log('here');
-        socket.emit('chat message', [offsetX,offsetY]);
-    }
+
+var movement = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
 }
+document.addEventListener('keydown', function(event) {
+    switch (event.keyCode) {
+        case 37:
+            movement.left = true;
+            break;
+        case 38:
+            movement.up = true;
+            break;
+        case 39:
+            movement.right = true;
+            break;
+        case 40:
+            movement.down = true;
+            break;
+        case 32:
+            gameStarted = true;
+            break;
+    }
+});
+document.addEventListener('keyup', function(event) {
+    switch (event.keyCode) {
+        case 37:
+            movement.left = false;
+            break;
+        case 38:
+            movement.up = false;
+            break;
+        case 39:
+            movement.right = false;
+            break;
+        case 40:
+            movement.down = false;
+            break;
+    }
+});
+
+// function whatKey() {
+//     let oldOffsetX = offsetX;
+//     let oldOffsetY = offsetY;
+//     let speed = 5;
+//     let check = false;
+//     if(keys[37]||keys['left']) {
+//         offsetX = Math.min(0, offsetX + speed);
+//         frame = Math.floor(((counter++) % 8)/4);
+//         check = true;
+//     }
+//     if(keys[39]||keys['right']) {
+//         offsetX = Math.max(-imageWidth*arrayWidth, offsetX - speed);
+//         frame = Math.floor(((counter++) % 8)/4);
+//         check = true;
+//     }
+//     if(keys[40]||keys['down']) {
+//         offsetY = Math.max(-imageHeight*arrayHeight, offsetY - speed);
+//         frame = Math.floor(((counter++) % 8)/4);
+//         check = true;
+//     }
+//     if(keys[38]||keys['up']) {
+//         offsetY = Math.min(0, offsetY + speed);
+//         frame = Math.floor(((counter++) % 8)/4);
+//         check = true;
+//     }
+//     if(keys[32]) {
+//         gameStarted = true;
+//     }
+//     if(check) {
+//         let coord = hitmapContext.getImageData(Math.floor(-offsetX/10+17), Math.floor(-offsetY/10+17), 1, 1);
+//         if(coord.data[2] == 221) {
+//             offsetX = oldOffsetX;
+//             offsetY = oldOffsetY;
+//         }
+//         console.log('here');
+//         socket.emit('chat message', [offsetX,offsetY]);
+//     }
+// }
 
 setup();
 
-document.getElementById('start').addEventListener('click', function() {
-    gameStarted=true;
+
+socket.emit('new player');
+
+setInterval(function() {
+    socket.emit('movement', keys);
+}, 1000 / 60);
+
+socket.on('initstate', function(data) {
+    console.log('data',data);
+    playerid = data[0];
+    offsetX = data[1];
+    offsetY = data[2];
+});
+
+
+
+socket.on('state', function(players) {
+    allPlayers = players;
 });
 
