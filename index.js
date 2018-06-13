@@ -6,10 +6,14 @@ var socketIO = require('socket.io');
 var app = express();
 var server = http.Server(app);
 var io = socketIO(server);
+
+
+var chats = [];
+
+
 app.set('port', 5000);
-
-
 app.use('/static', express.static(__dirname + '/static'));
+
 
 
 
@@ -37,6 +41,7 @@ io.on('connection', function(socket){
             y: y 
         };
         socket.emit('initstate', socket.id);
+        socket.emit('chats', chats);
     });
     socket.on('movement', function(data) {
         var player = players[socket.id] || {};
@@ -67,9 +72,16 @@ io.on('connection', function(socket){
         delete players[socket.id];
         console.log('user disconnected', socket.id);
     });
+    socket.on('chat message', function(msg){
+        var obj = {msg: msg, timestamp: new Date()};
+        chats.push(obj);
+        io.emit('chat message', obj);
+    });
 });
     
 
 setInterval(function() {
     io.sockets.emit('state', players);
-}, 1000 / 60);
+}, 1000 / 20);
+
+

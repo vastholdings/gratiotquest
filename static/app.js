@@ -52,10 +52,10 @@ async function setup(){
     images.push('img/bird0.png');
     images.push('img/bird1.png');
     images.push('img/gratiot.png');
-    images.push('img/cat01.png');
-    images.push('img/cat02.png');
-    images.push('img/cat03.png');
-    images.push('img/cat04.png');
+//    images.push('img/cat01.png');
+//    images.push('img/cat02.png');
+//    images.push('img/cat03.png');
+//    images.push('img/cat04.png');
 
     for(var i = 0; i < images.length; i++) {
         var imageObj = new Image();
@@ -72,11 +72,11 @@ async function setup(){
     bird[0] = imageArray[25];
     bird[1] = imageArray[26];
     gratiot = imageArray[27];
-    cat[0] = imageArray[28];
-    cat[1] = imageArray[29];
-    cat[2] = imageArray[30];
-    cat[3] = imageArray[31];
-
+//    cat[0] = imageArray[28];
+//    cat[1] = imageArray[29];
+//    cat[2] = imageArray[30];
+//    cat[3] = imageArray[31];
+//
     console.log('done loading');
     window.requestAnimationFrame(myRenderTileSetup);
 }
@@ -177,10 +177,17 @@ setInterval(function() {
 
 socket.on('initstate', function(data) {
     playerid = data;
-    console.log(playerid);
 });
 
+socket.on('chats', function(data) {
+    data.forEach((msg) => {
+        $('#messages').append($('<li>').text(msg.timestamp + ': ' + msg.msg));
+    })
+});
 
+socket.on('chat message', function(msg){
+    $('#messages').append($('<li>').text(msg.timestamp + ': ' + msg.msg));
+});
 
 socket.on('state', function(players) {
     allPlayers = players;
