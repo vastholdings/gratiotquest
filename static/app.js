@@ -188,12 +188,14 @@ socket.on('initstate', function(data) {
 
 socket.on('chats', function(data) {
     data.forEach((msg) => {
-	$('#messages').prepend($('<li>').text('('+msg.created_at+') ' + msg.username + ': ' + msg.msg));
+        var ts = moment(msg.created_at).format('MMMM Do YYYY, h:mm:ss a');
+	$('#messages').prepend($('<li>').text('('+ts+') ' + msg.username + ': ' + msg.msg));
     })
 });
 
 socket.on('chat message', function(msg){
-    $('#messages').prepend($('<li>').text('('+msg.created_at+') ' + msg.username + ': ' + msg.msg));
+    var ts = moment(msg.created_at).format('MMMM Do YYYY, h:mm:ss a');
+    $('#messages').prepend($('<li>').text('('+ts+') ' + msg.username + ': ' + msg.msg));
 });
 $('form').submit(function(){
     socket.emit('chat message', $('#m').val());
