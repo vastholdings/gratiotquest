@@ -7,8 +7,19 @@ var app = express();
 var server = http.Server(app);
 var io = socketIO(server);
 
+const {Client} = require('pg');
+const client = new Client({ user: 'readonly', password: 'readonly', database: 'gratiotquest' });
+let chats = [];
 
-var chats = [];
+client.connect();
+client.query('SELECT * from messages', (err, res) => {
+  if (err) {
+    console.log(err.stack)
+  } else {
+	chats = res.rows;
+    console.log(res.rows)
+  }
+})
 
 
 app.set('port', 5000);
@@ -33,12 +44,13 @@ var players = {};
 //Add the WebSocket handlers
 io.on('connection', function(socket){
     console.log('a user connected', socket.id);
-    socket.on('new player', function() {
+    socket.on('new player', function(data) {
         let x = Math.floor(Math.random()*1000);
         let y = Math.floor(Math.random()*800);
         players[socket.id] = {
             x: x,
-            y: y 
+            y: y,
+            username: data
         };
         socket.emit('initstate', socket.id);
         socket.emit('chats', chats);
@@ -72,8 +84,20 @@ io.on('connection', function(socket){
         delete players[socket.id];
         console.log('user disconnected', socket.id);
     });
-    socket.on('chat message', function(msg){
-        var obj = {msg: msg, timestamp: new Date()};
+    socket.on('chat message', function(msg) {
+        var player = players[socket.id] || {};
+	const text = 'INSERT INTO messages(msg, username) VALUES($1, $2)'
+        console.log(players);
+        console.log('socket',socket.id);
+	const values = [msg, player.username]
+
+	// callback
+	client.query(text, values, (err, res) => {
+	  if (err) {
+	    console.log(err.stack)
+	  }
+	})
+        var obj = {msg: msg, username: player.username, created_at: new Date()};
         chats.push(obj);
         io.emit('chat message', obj);
     });

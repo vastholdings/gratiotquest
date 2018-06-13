@@ -21,7 +21,12 @@ let cat = [];
 let gratiot;
 let gameStarted = false;
 let timer;
+let username;
 
+if (localStorage.getItem("username") === null) {
+    username = prompt('Set a username');
+    localStorage.setItem("username", username);
+}
  
 var socket = io();
 
@@ -169,7 +174,7 @@ document.addEventListener('keyup', function(event) {
 
 setup();
 
-socket.emit('new player');
+socket.emit('new player', username);
 
 setInterval(function() {
     socket.emit('movement', movement);
@@ -181,14 +186,19 @@ socket.on('initstate', function(data) {
 
 socket.on('chats', function(data) {
     data.forEach((msg) => {
-        $('#messages').append($('<li>').text(msg.timestamp + ': ' + msg.msg));
+	$('#messages').append($('<li>').text('('+msg.created_at+') ' + msg.username + ': ' + msg.msg));
     })
 });
 
 socket.on('chat message', function(msg){
-    $('#messages').append($('<li>').text(msg.timestamp + ': ' + msg.msg));
+    $('#messages').append($('<li>').text('('+msg.created_at+') ' + msg.username + ': ' + msg.msg));
 });
-
+$('form').submit(function(){
+    socket.emit('chat message', $('#m').val());
+    $('#m').val('');
+    return false;
+});
+ 
 socket.on('state', function(players) {
     allPlayers = players;
 });
