@@ -174,6 +174,38 @@ document.addEventListener('keyup', function(event) {
     }
 });
 
+document.addEventListener("touchstart", touchHandler);
+document.addEventListener("touchmove", touchHandler);
+document.addEventListener("touchend", function(e) {
+    movement.right = false;
+    movement.left = false;
+    movement.up = false;
+    movement.down = false;
+    socket.emit('endmove');
+    e.preventDefault();
+});
+
+function touchHandler(e) {
+    if(!gameStarted) {
+        gameStarted = true;
+        return;
+    }
+    if(e.touches) {
+        playerX = e.touches[0].pageX - can.offsetLeft;
+        playerY = e.touches[0].pageY - can.offsetTop;
+        if(playerX > 300) movement.right = true;
+        if(playerX < 100) movement.left = true;
+        if(playerY > 300) movement.down = true;
+        if(playerY < 100) movement.up = true;
+        console.log(playerX, playerY);
+        if(movement.left||movement.up||movement.right||movement.down) {
+            socket.emit('startmove');
+        }
+        e.preventDefault();
+    }
+}
+
+
 setup();
 
 socket.emit('new player', username);
