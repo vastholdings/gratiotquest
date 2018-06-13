@@ -95,7 +95,7 @@ function myRenderTileSetup() {
         ctx.save();
         let offsetX = allPlayers[playerid].x;
         let offsetY = allPlayers[playerid].y;
-        ctx.translate(-offsetX+100, -offsetY+100);
+        ctx.translate(-offsetX+200, -offsetY+200);
         ctx.clearRect(0, 0, can.width, can.height);
         for(let y = 0; y < arrayWidth; y++){
             for(let x = 0; x < arrayHeight; x++){
