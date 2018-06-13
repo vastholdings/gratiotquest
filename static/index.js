@@ -17,6 +17,7 @@ let imageWidth = 2000;
 let imageHeight = 1600;
 let imageArray = [];
 let bird = [];
+let cat = [];
 let gratiot;
 let gameStarted = false;
 let timer;
@@ -51,6 +52,10 @@ async function setup(){
     images.push('img/bird0.png');
     images.push('img/bird1.png');
     images.push('img/gratiot.png');
+    images.push('img/cat01.png');
+    images.push('img/cat02.png');
+    images.push('img/cat03.png');
+    images.push('img/cat04.png');
 
     for(var i = 0; i < images.length; i++) {
         var imageObj = new Image();
@@ -67,6 +72,10 @@ async function setup(){
     bird[0] = imageArray[25];
     bird[1] = imageArray[26];
     gratiot = imageArray[27];
+    cat[0] = imageArray[28];
+    cat[1] = imageArray[29];
+    cat[2] = imageArray[30];
+    cat[3] = imageArray[31];
 
     console.log('done loading');
     window.requestAnimationFrame(myRenderTileSetup);
