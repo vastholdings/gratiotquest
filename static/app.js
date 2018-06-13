@@ -182,7 +182,6 @@ document.addEventListener("touchend", function(e) {
     movement.up = false;
     movement.down = false;
     socket.emit('endmove');
-    e.preventDefault();
 });
 
 function touchHandler(e) {
@@ -201,7 +200,6 @@ function touchHandler(e) {
         if(movement.left||movement.up||movement.right||movement.down) {
             socket.emit('startmove');
         }
-        e.preventDefault();
     }
 }
 
