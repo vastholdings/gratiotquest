@@ -36,7 +36,7 @@ io.on('connection', function(socket){
             x: x,
             y: y 
         };
-        io.sockets.emit('initstate', [socket.id, x, y]);
+        socket.emit('initstate', socket.id);
     });
     socket.on('movement', function(data) {
         var player = players[socket.id] || {};

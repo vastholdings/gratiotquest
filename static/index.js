@@ -93,12 +93,18 @@ function myRenderTileSetup() {
         
         ctx.restore();
     } else {
+        ctx.save();
+        //console.log(allPlayers[playerid],'here');
+        //let offsetX = allPlayers[playerid].x;
+        //let offsetY = allPlayers[playerid].y;
+        //ctx.translate(-offsetX+100, -offsetY+100);
         ctx.drawImage(gratiot, 0, 0, 800, 600);
         if(!timer) {
             timer = setInterval(function() {
                 frame = (frame+1)%2;
             }, 400);
         }
+        ctx.restore();
     }
     
     window.requestAnimationFrame(myRenderTileSetup);
@@ -161,7 +167,8 @@ setInterval(function() {
 }, 1000 / 60);
 
 socket.on('initstate', function(data) {
-    playerid = data[0];
+    playerid = data;
+    console.log(playerid);
 });
 
 
