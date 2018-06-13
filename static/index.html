@@ -16,14 +16,21 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
       .container { display: flex }
+
+@media only screen and (max-width: 1000px) {
+    /* For mobile phones: */
+    .container {
+	flex-direction: column;
+    }
+}
     </style>
 </head>
-<body>
+<body oncopy="return false" oncut="return false" onpaste="return false">
 <div class="container">
     <canvas id="canvas1" width="800" height="600" style = "border: 1px solid black;"></canvas>
     
 <div>
-    <ul id="messages" style="display:flex;flex-direction:column-reverse;background-color:orange;color:green;border:1px solid black;height:600px;width:800px"><li style="font-size:22px;padding:20px;">gratiot chat</li></ul>
+    <ul id="messages" style="display:flex;flex-direction:column-reverse;background-color:orange;color:green;border:1px solid black;height:600px;"><li style="font-size:22px;padding:20px;width:800px">gratiot chat</li></ul>
 </div>
     
 </div>
