@@ -194,9 +194,9 @@ function touchHandler(e) {
         playerX = e.touches[0].pageX - can.offsetLeft;
         playerY = e.touches[0].pageY - can.offsetTop;
         if(playerX > 300) movement.right = true;
-        if(playerX < 100) movement.left = true;
+        if(playerX < 200) movement.left = true;
         if(playerY > 300) movement.down = true;
-        if(playerY < 100) movement.up = true;
+        if(playerY < 200) movement.up = true;
         console.log(playerX, playerY);
         if(movement.left||movement.up||movement.right||movement.down) {
             socket.emit('startmove');
