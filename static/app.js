@@ -95,7 +95,7 @@ function myRenderTileSetup() {
         ctx.save();
         let offsetX = allPlayers[playerid].x;
         let offsetY = allPlayers[playerid].y;
-        ctx.translate(-offsetX+200, -offsetY+200);
+        ctx.translate(-offsetX+250, -offsetY+250);
         ctx.clearRect(0, 0, can.width, can.height);
         for(let y = 0; y < arrayWidth; y++){
             for(let x = 0; x < arrayHeight; x++){
@@ -110,10 +110,6 @@ function myRenderTileSetup() {
         ctx.restore();
     } else {
         ctx.save();
-        //console.log(allPlayers[playerid],'here');
-        //let offsetX = allPlayers[playerid].x;
-        //let offsetY = allPlayers[playerid].y;
-        //ctx.translate(-offsetX+100, -offsetY+100);
         ctx.drawImage(gratiot, 0, 0, 800, 600);
         if(!timer) {
             timer = setInterval(function() {
@@ -174,9 +170,9 @@ document.addEventListener('keyup', function(event) {
     }
 });
 
-document.addEventListener("touchstart", touchHandler);
-document.addEventListener("touchmove", touchHandler);
-document.addEventListener("touchend", function(e) {
+can.addEventListener("touchstart", touchHandler);
+can.addEventListener("touchmove", touchHandler);
+can.addEventListener("touchend", function(e) {
     movement.right = false;
     movement.left = false;
     movement.up = false;
@@ -192,11 +188,10 @@ function touchHandler(e) {
     if(e.touches) {
         playerX = e.touches[0].pageX - can.offsetLeft;
         playerY = e.touches[0].pageY - can.offsetTop;
-        if(playerX > 300) movement.right = true;
-        if(playerX < 200) movement.left = true;
-        if(playerY > 300) movement.down = true;
-        if(playerY < 200) movement.up = true;
-        console.log(playerX, playerY);
+        if(playerX > 420) movement.right = true;
+        if(playerX < 320) movement.left = true;
+        if(playerY > 340) movement.down = true;
+        if(playerY < 260) movement.up = true;
         if(movement.left||movement.up||movement.right||movement.down) {
             socket.emit('startmove');
         }
