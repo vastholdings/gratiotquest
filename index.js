@@ -16,10 +16,10 @@ client.query('SELECT * from messages', (err, res) => {
   if (err) {
     console.log(err.stack)
   } else {
-	chats = res.rows;
-    console.log(res.rows)
+    chats = res.rows;
   }
 })
+
 
 
 app.set('port', 5000);
@@ -33,10 +33,7 @@ app.get('/', function(request, response) {
 });
 
 
-// Starts the server.
-server.listen(5000, function() {
-    console.log('Starting server on port 5000');
-});
+server.listen(5000);
 
 
 var players = {};
@@ -45,8 +42,8 @@ var players = {};
 io.on('connection', function(socket){
     console.log('a user connected', socket.id);
     socket.on('new player', function(data) {
-        let x = Math.floor(Math.random()*1000);
-        let y = Math.floor(Math.random()*800);
+        let x = Math.floor(Math.random()*1000)+2000;
+        let y = Math.floor(Math.random()*800)+1000;
         players[socket.id] = {
             x: x,
             y: y,
@@ -86,17 +83,17 @@ io.on('connection', function(socket){
     });
     socket.on('chat message', function(msg) {
         var player = players[socket.id] || {};
-	const text = 'INSERT INTO messages(msg, username) VALUES($1, $2)'
+        const text = 'INSERT INTO messages(msg, username) VALUES($1, $2)'
         console.log(players);
         console.log('socket',socket.id);
-	const values = [msg, player.username]
+        const values = [msg, player.username]
 
-	// callback
-	client.query(text, values, (err, res) => {
-	  if (err) {
-	    console.log(err.stack)
-	  }
-	})
+        // callback
+        client.query(text, values, (err, res) => {
+          if (err) {
+            console.log(err.stack)
+          }
+        })
         var obj = {msg: msg, username: player.username, created_at: new Date()};
         chats.push(obj);
         io.emit('chat message', obj);

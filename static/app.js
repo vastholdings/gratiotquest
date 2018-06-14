@@ -13,7 +13,7 @@ let frame = 0;
 let counter = 0;
 let arrayWidth = 5;
 let arrayHeight = 5;
-let imageWidth = 2000;
+let imageWidth = 2800;
 let imageHeight = 1600;
 let imageArray = [];
 let bird = [];
@@ -30,7 +30,7 @@ if (localStorage.getItem("username") === null) {
 }
 localStorage.setItem("username", username);
  
-var socket = io();
+var socket = io(window.location.origin, { path: '/gratiotquest/socket.io' });
 
 function draw() {
     Object.keys(allPlayers).forEach((player) => {
@@ -54,11 +54,11 @@ async function setup(){
     let imagesLoading = [];
     let images = [];
     for(let i = 0; i < 25; i++) {
-        images[i] = `tiles/tile${pad(i,3)}.png`;
+        images[i] = `static/tiles/tile${pad(i,3)}.png`;
     }
-    images.push('img/bird0.png');
-    images.push('img/bird1.png');
-    images.push('img/gratiot.png');
+    images.push('static/img/bird0.png');
+    images.push('static/img/bird1.png');
+    images.push('static/img/gratiot.png');
 //    images.push('img/cat01.png');
 //    images.push('img/cat02.png');
 //    images.push('img/cat03.png');
