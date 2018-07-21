@@ -85,19 +85,9 @@ io.on('connection', function(socket){
         delete players[socket.id];
         console.log('user disconnected', socket.id);
     });
-    socket.on('chat message', function(msg) {
+    socket.on('chat message', async function(msg) {
         var player = players[socket.id] || {};
-        const text = 'INSERT INTO messages(msg, username) VALUES($1, $2)'
-        console.log(players);
-        console.log('socket',socket.id);
-        const values = [msg, player.username]
-
-        // callback
-        client.query(text, values, (err, res) => {
-          if (err) {
-            console.log(err.stack)
-          }
-        })
+        await pool.query('INSERT INTO messages(msg, username) VALUES($1, $2)', [msg, player.username]);
         var obj = {msg: msg, username: player.username, created_at: new Date()};
         io.emit('chat message', obj);
     });
