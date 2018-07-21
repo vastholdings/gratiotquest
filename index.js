@@ -7,19 +7,21 @@ var app = express();
 var server = http.Server(app);
 var io = socketIO(server);
 
-const {Client} = require('pg');
-const client = new Client({ user: 'readonly', password: 'readonly', database: 'gratiotquest' });
-let chats = [];
+var pg = require('pg');
+const url = require('url')
 
-client.connect();
-client.query('SELECT * from messages', (err, res) => {
-  if (err) {
-    console.log(err.stack)
-  } else {
-    chats = res.rows;
-  }
-})
+const params = url.parse(process.env.DATABASE_URL || "postgres://user:pass@localhost:5432/gratiotquest");
+const auth = params.auth.split(':');
 
+const config = {
+      user: auth[0],
+      password: auth[1],
+      host: params.hostname,
+      port: params.port,
+      database: params.pathname.split('/')[1],
+      ssl: true
+};
+var pool = new pg.Pool(config);
 
 
 app.set('port', 5000);
@@ -34,6 +36,7 @@ app.get('/', function(request, response) {
 
 
 server.listen(5000);
+console.log('Started on port 5000');
 
 
 var players = {};
@@ -41,7 +44,7 @@ var players = {};
 //Add the WebSocket handlers
 io.on('connection', function(socket){
     console.log('a user connected', socket.id);
-    socket.on('new player', function(data) {
+    socket.on('new player', async function(data) {
         let x = Math.floor(Math.random()*1000)+2000;
         let y = Math.floor(Math.random()*800)+1000;
         players[socket.id] = {
@@ -50,7 +53,8 @@ io.on('connection', function(socket){
             username: data
         };
         socket.emit('initstate', socket.id);
-        socket.emit('chats', chats);
+        var res = await pool.query('SELECT * from messages')
+        socket.emit('chats', res.rows);
     });
     socket.on('movement', function(data) {
         var player = players[socket.id] || {};
@@ -95,7 +99,6 @@ io.on('connection', function(socket){
           }
         })
         var obj = {msg: msg, username: player.username, created_at: new Date()};
-        chats.push(obj);
         io.emit('chat message', obj);
     });
 });
