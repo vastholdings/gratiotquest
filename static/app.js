@@ -70,7 +70,7 @@ function setup(){
     }
 
     console.log('images loading');
-    imageArray = Promise.all(imagesLoading).then(() => {
+    Promise.all(imagesLoading).then((imageArray) => {
         bird[0] = imageArray[25];
         bird[1] = imageArray[26];
         gratiot = imageArray[27];
@@ -83,6 +83,7 @@ function setup(){
 
 function myRenderTileSetup() {
     if(gameStarted) {
+        console.log('here');
         clearInterval(timer);
         ctx.save();
         let offsetX = allPlayers[playerid].x;
