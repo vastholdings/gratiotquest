@@ -8,18 +8,18 @@ var server = http.Server(app);
 var io = socketIO(server);
 
 var pg = require('pg');
-const url = require('url')
+const url = require('url');
 
-const params = url.parse(process.env.DATABASE_URL || "postgres://user:pass@localhost:5432/gratiotquest");
+const params = url.parse(process.env.DATABASE_URL || 'postgres://user:pass@localhost:5432/gratiotquest');
 const auth = params.auth.split(':');
 
 const config = {
-      user: auth[0],
-      password: auth[1],
-      host: params.hostname,
-      port: params.port,
-      database: params.pathname.split('/')[1],
-      ssl: true
+    user: auth[0],
+    password: auth[1],
+    host: params.hostname,
+    port: params.port,
+    database: params.pathname.split('/')[1],
+    ssl: true
 };
 var pool = new pg.Pool(config);
 
@@ -40,11 +40,13 @@ console.log('Started on port 5000');
 
 
 var players = {};
+var catfood = {};
+var items = 0;
 
 //Add the WebSocket handlers
 io.on('connection', function(socket){
     console.log('a user connected', socket.id);
-    socket.on('new player', async function(data) {
+    socket.on('new player', (data) => {
         let x = Math.floor(Math.random()*1000)+2000;
         let y = Math.floor(Math.random()*800)+1000;
         players[socket.id] = {
@@ -53,8 +55,9 @@ io.on('connection', function(socket){
             username: data
         };
         socket.emit('initstate', socket.id);
-        var res = await pool.query('SELECT * from messages')
-        socket.emit('chats', res.rows);
+        pool.query('SELECT * from messages').then((res) => {
+            socket.emit('chats', res.rows);
+        });
     });
     socket.on('movement', function(data) {
         var player = players[socket.id] || {};
@@ -85,17 +88,26 @@ io.on('connection', function(socket){
         delete players[socket.id];
         console.log('user disconnected', socket.id);
     });
-    socket.on('chat message', async function(msg) {
+    socket.on('chat message', (msg) => {
         var player = players[socket.id] || {};
-        await pool.query('INSERT INTO messages(msg, username) VALUES($1, $2)', [msg, player.username]);
-        var obj = {msg: msg, username: player.username, created_at: new Date()};
-        io.emit('chat message', obj);
+        pool.query('INSERT INTO messages(msg, username) VALUES($1, $2)', [msg, player.username]).then(() => {
+            var obj = {msg: msg, username: player.username, created_at: new Date()};
+            io.emit('chat message', obj);
+        });
     });
 });
-    
+
 
 setInterval(function() {
     io.sockets.emit('state', players);
 }, 1000 / 20);
+
+setInterval(function() {
+    let x = Math.floor(Math.random()*1000)+2000;
+    let y = Math.floor(Math.random()*800)+1000;
+    catfood[items++] = {
+        x, y
+    };
+}, 10000);
 
 

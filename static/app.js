@@ -1,4 +1,4 @@
-/* global io */
+/* global io, $, moment */
 
 
 let can = document.getElementById('canvas1');
@@ -17,20 +17,19 @@ let imageWidth = 2800;
 let imageHeight = 1600;
 let imageArray = [];
 let bird = [];
-let cat = [];
 let gratiot;
 let gameStarted = false;
 let timer;
 let username;
 
-if (localStorage.getItem("username") === null) {
+if (localStorage.getItem('username') === null) {
     username = prompt('Set a username');
 } else {
-    username = localStorage.getItem("username");
+    username = localStorage.getItem('username');
 }
-localStorage.setItem("username", username);
- 
-var socket = io(window.location.origin, { path: '/gratiotquest/socket.io' });
+localStorage.setItem('username', username);
+
+var socket = io(window.location.origin, { path: '/socket.io' });
 
 function draw() {
     Object.keys(allPlayers).forEach((player) => {
@@ -50,7 +49,7 @@ function pad(n, width, z) {
 
 
 
-async function setup(){
+function setup(){
     let imagesLoading = [];
     let images = [];
     for(let i = 0; i < 25; i++) {
@@ -59,10 +58,6 @@ async function setup(){
     images.push('static/img/bird0.png');
     images.push('static/img/bird1.png');
     images.push('static/img/gratiot.png');
-//    images.push('img/cat01.png');
-//    images.push('img/cat02.png');
-//    images.push('img/cat03.png');
-//    images.push('img/cat04.png');
 
     for(var i = 0; i < images.length; i++) {
         var imageObj = new Image();
@@ -75,17 +70,14 @@ async function setup(){
     }
 
     console.log('images loading');
-    imageArray = await Promise.all(imagesLoading);
-    bird[0] = imageArray[25];
-    bird[1] = imageArray[26];
-    gratiot = imageArray[27];
-//    cat[0] = imageArray[28];
-//    cat[1] = imageArray[29];
-//    cat[2] = imageArray[30];
-//    cat[3] = imageArray[31];
-//
-    console.log('done loading');
-    window.requestAnimationFrame(myRenderTileSetup);
+    imageArray = Promise.all(imagesLoading).then(() => {
+        bird[0] = imageArray[25];
+        bird[1] = imageArray[26];
+        gratiot = imageArray[27];
+
+        console.log('done loading');
+        window.requestAnimationFrame(myRenderTileSetup);
+    });
 }
 
 
@@ -106,7 +98,7 @@ function myRenderTileSetup() {
             }
         }
         draw();
-        
+
         ctx.restore();
     } else {
         ctx.save();
@@ -118,7 +110,7 @@ function myRenderTileSetup() {
         }
         ctx.restore();
     }
-    
+
     window.requestAnimationFrame(myRenderTileSetup);
 }
 
@@ -170,9 +162,9 @@ document.addEventListener('keyup', function(event) {
     }
 });
 
-can.addEventListener("touchstart", touchHandler);
-can.addEventListener("touchmove", touchHandler);
-can.addEventListener("touchend", function(e) {
+can.addEventListener('touchstart', touchHandler);
+can.addEventListener('touchmove', touchHandler);
+can.addEventListener('touchend', function() {
     movement.right = false;
     movement.left = false;
     movement.up = false;
@@ -186,8 +178,8 @@ function touchHandler(e) {
         return;
     }
     if(e.touches) {
-        playerX = e.touches[0].pageX - can.offsetLeft;
-        playerY = e.touches[0].pageY - can.offsetTop;
+        const playerX = e.touches[0].pageX - can.offsetLeft;
+        const playerY = e.touches[0].pageY - can.offsetTop;
         if(playerX > 420) movement.right = true;
         if(playerX < 320) movement.left = true;
         if(playerY > 340) movement.down = true;
@@ -214,8 +206,8 @@ socket.on('initstate', function(data) {
 socket.on('chats', function(data) {
     data.forEach((msg) => {
         var ts = moment(msg.created_at).format('MMMM Do YYYY, h:mm:ss a');
-	$('#messages').prepend($('<li>').text('('+ts+') ' + msg.username + ': ' + msg.msg));
-    })
+        $('#messages').prepend($('<li>').text('('+ts+') ' + msg.username + ': ' + msg.msg));
+    });
 });
 
 socket.on('chat message', function(msg){
@@ -227,7 +219,7 @@ $('form').submit(function(){
     $('#m').val('');
     return false;
 });
- 
+
 socket.on('state', function(players) {
     allPlayers = players;
 });
