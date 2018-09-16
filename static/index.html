@@ -4,7 +4,7 @@
     <title>GRATIOT QUEST</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,31 +21,30 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
       .container { display: flex }
-	    
+
 
 @media only screen and (max-width: 1000px) {
-    /* For mobile phones: */
-    .container {
-	flex-direction: column;
-    }
-    form input {
-        height: 100px;
-        background-color: green;
-    }
-    form button {
-        height: 100px
-    }
+  /* For mobile phones: */
+  .container {
+    flex-direction: column;
+  }
+  form input {
+    height: 100px;
+    background-color: green;
+  }
+  form button {
+    height: 100px
+  }
 }
     </style>
 </head>
 <body oncopy="return false" oncut="return false" onpaste="return false">
 <div class="container">
     <canvas id="canvas1" width="800" height="600" style = "border: 1px solid black;"></canvas>
-    
 <div>
     <ul id="messages" style="display:flex;flex-direction:column-reverse;background-color:orange;color:green;border:1px solid black;height:600px;"><li style="font-size:22px;padding:20px;width:800px">gratiot chat</li></ul>
 </div>
-    
+
 </div>
 <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>

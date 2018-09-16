@@ -47,14 +47,9 @@ function draw() {
     )
   })
   Object.keys(allCatfood).forEach(p => {
-    ctx.drawImage(
-      catfood,
-      allCatfood[p].x,
-      allCatfood[p].y,
-      20,
-      20,
-    )
+    ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
   })
+
 }
 
 // stackoverflow
@@ -86,6 +81,14 @@ function myRenderTileSetup() {
     draw()
 
     ctx.restore()
+		// Create gradient
+		var gradient=ctx.createLinearGradient(0,0,400,0);
+		gradient.addColorStop("0","magenta");
+		gradient.addColorStop("0.5","blue");
+		gradient.addColorStop("1.0","red");
+		ctx.fillStyle=gradient;
+		ctx.font="30px courier bold";
+		ctx.fillText('SCORE: '+allPlayers[playerid].score, 100, 100)
   } else {
     ctx.save()
     ctx.drawImage(gratiot, 0, 0, 800, 600)
@@ -114,7 +117,7 @@ function setup() {
   for (let i = 0; i < images.length; i += 1) {
     const imageObj = new Image()
     imagesLoading[i] = new Promise(resolve => {
-      imageObj.onload = () => {
+      imageObj.onload = function() {
         resolve(this)
       }
       imageObj.src = images[i]
@@ -241,9 +244,9 @@ $('form').submit(() => {
 })
 
 socket.on('state', players => {
-  allPlayers = res.players
+  allPlayers = players
 })
 
-socket.on('catfood', catfood => {
-  allCatfood = catfood
+socket.on('catfood', c => {
+  allCatfood = c
 })

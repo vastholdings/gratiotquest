@@ -50,7 +50,10 @@ io.on('connection', socket => {
     players[socket.id] = {
       x,
       y,
+      width: 100,
+      height: 100,
       username: data,
+      score: 0
     }
     socket.emit('initstate', socket.id)
     pool.query('SELECT * from messages').then(res => {
@@ -80,7 +83,6 @@ io.on('connection', socket => {
         rect1.y < rect2.y + rect2.height &&
         rect1.y + rect1.height > rect2.y
       ) {
-        console.log('catfood collision')
         player.score += 100
         delete catfood[key]
       }
@@ -126,13 +128,15 @@ setInterval(() => {
 }, 1000 / 20)
 
 setInterval(() => {
-  const x = Math.floor(Math.random() * 14000)
-  const y = Math.floor(Math.random() * 8000)
-  items += 1
-  catfood[items] = {
-    x,
-    y,
-    width: 20,
-    height: 20,
+  if(Object.keys(players).length>0 && Object.keys(catfood).length<10000) {
+    const x = Math.floor(Math.random() * 14000)
+    const y = Math.floor(Math.random() * 8000)
+    items += 1
+    catfood[items] = {
+      x,
+      y,
+      width: 20,
+      height: 20,
+    }
   }
-}, 10000)
+}, 1000)
