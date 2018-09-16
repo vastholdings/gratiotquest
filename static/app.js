@@ -83,11 +83,11 @@ function myRenderTileSetup() {
     ctx.restore()
 		// Create gradient
 		var gradient=ctx.createLinearGradient(0,0,400,0);
-		gradient.addColorStop("0","magenta");
-		gradient.addColorStop("0.5","blue");
-		gradient.addColorStop("1.0","red");
+		gradient.addColorStop(Math.random(),"magenta");
+		gradient.addColorStop(Math.random(),"blue");
+		gradient.addColorStop(Math.random(),"red");
 		ctx.fillStyle=gradient;
-		ctx.font="30px courier bold";
+		ctx.font="bold 30px verdana";
 		ctx.fillText('SCORE: '+allPlayers[playerid].score, 100, 100)
   } else {
     ctx.save()
