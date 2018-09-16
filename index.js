@@ -71,6 +71,20 @@ io.on('connection', socket => {
     if (data.down) {
       player.y += 5
     }
+    Object.keys(catfood).forEach(key => {
+      const rect1 = catfood[key]
+      const rect2 = player
+      if (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
+      ) {
+        console.log('catfood collision')
+        player.score += 100
+        delete catfood[key]
+      }
+    })
   })
 
   socket.on('startmove', () => {
@@ -107,13 +121,18 @@ io.on('connection', socket => {
 setInterval(() => {
   io.sockets.emit('state', players)
 }, 1000 / 20)
+setInterval(() => {
+  io.sockets.emit('catfood', catfood)
+}, 1000 / 20)
 
 setInterval(() => {
-  const x = Math.floor(Math.random() * 1000) + 2000
-  const y = Math.floor(Math.random() * 800) + 1000
+  const x = Math.floor(Math.random() * 14000)
+  const y = Math.floor(Math.random() * 8000)
   items += 1
   catfood[items] = {
     x,
     y,
+    width: 20,
+    height: 20,
   }
 }, 10000)

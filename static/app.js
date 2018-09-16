@@ -6,6 +6,7 @@ const ctx = can.getContext('2d')
 // player's position
 let playerid
 let allPlayers = {}
+let allCatfood = {}
 
 // how far offset the canvas is
 let frame = 0
@@ -16,6 +17,7 @@ const imageWidth = 2800
 const imageHeight = 1600
 let imageArray = []
 const bird = []
+let catfood
 let gratiot
 let gameStarted = false
 let timer
@@ -42,6 +44,15 @@ function draw() {
       allPlayers[player].y,
       100,
       100,
+    )
+  })
+  Object.keys(allCatfood).forEach(p => {
+    ctx.drawImage(
+      catfood,
+      allCatfood[p].x,
+      allCatfood[p].y,
+      20,
+      20,
     )
   })
 }
@@ -98,11 +109,12 @@ function setup() {
   images.push('static/img/bird0.png')
   images.push('static/img/bird1.png')
   images.push('static/img/gratiot.png')
+  images.push('static/img/catfood.jpg')
 
   for (let i = 0; i < images.length; i += 1) {
     const imageObj = new Image()
     imagesLoading[i] = new Promise(resolve => {
-      imageObj.onload = function() {
+      imageObj.onload = () => {
         resolve(this)
       }
       imageObj.src = images[i]
@@ -114,6 +126,7 @@ function setup() {
     bird[0] = imageArray[25]
     bird[1] = imageArray[26]
     gratiot = imageArray[27]
+    catfood = imageArray[28]
 
     window.requestAnimationFrame(myRenderTileSetup)
   })
@@ -228,5 +241,9 @@ $('form').submit(() => {
 })
 
 socket.on('state', players => {
-  allPlayers = players
+  allPlayers = res.players
+})
+
+socket.on('catfood', catfood => {
+  allCatfood = catfood
 })
