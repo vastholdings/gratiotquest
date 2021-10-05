@@ -53,7 +53,7 @@ io.on('connection', socket => {
       width: 100,
       height: 100,
       username: data,
-      score: 0
+      score: 0,
     }
     socket.emit('initstate', socket.id)
     pool.query('SELECT * from messages').then(res => {
@@ -128,7 +128,7 @@ setInterval(() => {
 }, 1000 / 20)
 
 setInterval(() => {
-  if(Object.keys(players).length>0 && Object.keys(catfood).length<10000) {
+  if (Object.keys(players).length > 0 && Object.keys(catfood).length < 10000) {
     const x = Math.floor(Math.random() * 14000)
     const y = Math.floor(Math.random() * 8000)
     items += 1
