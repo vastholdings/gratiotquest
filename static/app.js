@@ -116,7 +116,7 @@ function setup() {
   for (let i = 0; i < images.length; i += 1) {
     const imageObj = new Image()
     imagesLoading[i] = new Promise(resolve => {
-      imageObj.onload = function() {
+      imageObj.onload = function () {
         resolve(this)
       }
       imageObj.src = images[i]
