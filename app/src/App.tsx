@@ -12,96 +12,169 @@ interface Message {
   username: string
 }
 
-function loadImage(str: string) {
-  const imageObj = new Image()
-  return new Promise(resolve => {
-    imageObj.onload = function () {
-      resolve(this)
-    }
-    imageObj.src = str
-  })
+async function loadImage(str: string) {
+  const img = new Image()
+  img.src = str
+  await img.decode()
+  return img
 }
 
-const host = 'wss://kp00qnm3ma.execute-api.us-east-2.amazonaws.com/Prod/'
+const SOCKET_URL = 'wss://kp00qnm3ma.execute-api.us-east-2.amazonaws.com/Prod/'
+
+let serverP: Promise<WebSocket> | undefined
+
+function getSocket() {
+  if (!serverP) {
+    serverP = new Promise<WebSocket>((resolve, reject) => {
+      const s = new WebSocket(SOCKET_URL)
+
+      s.onopen = () => {
+        console.log(
+          'socket connection is opened [state = ' + s.readyState + ']',
+        )
+        resolve(s)
+      }
+
+      s.onerror = err => {
+        console.error('socket connection error : ', err)
+        reject(err)
+      }
+    })
+  }
+  return serverP
+}
+
+// Hook
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue
+    }
+    try {
+      const item = window.localStorage.getItem(key)
+      return item ? JSON.parse(item) : initialValue
+    } catch (error) {
+      console.log(error)
+      return initialValue
+    }
+  })
+  const setValue = (value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore =
+        value instanceof Function ? value(storedValue) : value
+      setStoredValue(valueToStore)
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  return [storedValue, setValue] as const
+}
+
 function App() {
   const ref = useRef<HTMLCanvasElement>(null)
-  const [socket] = useState(new WebSocket(host))
   const [messages, setMessages] = useState<Message[]>([])
+  const [socket, setSocket] = useState<WebSocket>()
+  const [error, setError] = useState<unknown>()
+  const [username, setUsername] = useLocalStorage('username', '')
+  const [gameStarted, setGameStarted] = useState(false)
 
   useEffect(() => {
-    socket.onmessage = function (event) {
-      const obj = JSON.parse(event.data)
-      if (obj.type === 'chat') {
-        setMessages([...messages, obj])
+    if (socket) {
+      socket.onmessage = function (event) {
+        const obj = JSON.parse(event.data)
+        if (obj.type === 'chat') {
+          setMessages([...messages, obj])
+        }
       }
     }
+  }, [messages, socket])
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        setSocket(await getSocket())
+      } catch (e) {
+        setError(e)
+      }
+    })()
   }, [])
 
   useEffect(() => {
     ;(async () => {
-      const can = ref.current as any
-      if (!can) {
-        return
-      }
-      const ctx = can.getContext('2d') as any
-      if (!ctx) {
-        return
-      }
+      let i = 0
+      try {
+        if (!gameStarted) {
+          return
+        }
+        const can = ref.current
+        if (!can) {
+          return
+        }
+        const ctx = can.getContext('2d')
+        if (!ctx) {
+          return
+        }
+        if (!socket) {
+          return
+        }
+        // player's position
+        // let playerid: any
+        // let allPlayers = {} as any
+        // let allCatfood = {} as any
+        // let counter = 0
+        let catfood: HTMLImageElement
+        const arrayWidth = 5
+        const arrayHeight = 5
+        const imageWidth = 2800
+        const imageHeight = 1600
+        const bird = [] as HTMLImageElement[]
 
-      // player's position
-      let playerid: any
-      let allPlayers = {} as any
-      let allCatfood = {} as any
+        // function draw() {
+        //   Object.keys(allPlayers).forEach(player => {
+        //     if (allPlayers[player].moving) {
+        //       allPlayers[player].frame = Math.floor((counter % 8) / 4)
+        //       counter += 1
+        //     }
+        //     ctx.drawImage(
+        //       bird[allPlayers[player].frame || 0],
+        //       allPlayers[player].x,
+        //       allPlayers[player].y,
+        //       100,
+        //       100,
+        //     )
+        //   })
 
-      // how far offset the canvas is
-      let frame = 0
-      let counter = 0
-      const arrayWidth = 5
-      const arrayHeight = 5
-      const imageWidth = 2800
-      const imageHeight = 1600
-      let imageArray = [] as any[]
-      const bird = [] as any[]
-      let catfood: any
-      let gratiot: any
-      let gameStarted = false
-      let timer: any
-      const user = localStorage.getItem('username')
-      let username = user || prompt('Set a username') || ''
-      localStorage.setItem('username', username)
+        //   Object.keys(allCatfood).forEach(p => {
+        //     ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
+        //   })
+        // }
 
-      function draw() {
-        Object.keys(allPlayers).forEach(player => {
-          if (allPlayers[player].moving) {
-            allPlayers[player].frame = Math.floor((counter % 8) / 4)
-            counter += 1
-          }
-          ctx.drawImage(
-            bird[allPlayers[player].frame || 0],
-            allPlayers[player].x,
-            allPlayers[player].y,
-            100,
-            100,
-          )
-        })
-
-        Object.keys(allCatfood).forEach(p => {
-          ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
-        })
-      }
-
-      function myRenderTileSetup() {
-        if (gameStarted) {
-          clearInterval(timer)
-          ctx.save()
-          const offsetX = allPlayers[playerid].x
-          const offsetY = allPlayers[playerid].y
-          ctx.translate(-offsetX + 250, -offsetY + 250)
-          ctx.clearRect(0, 0, can.width, can.height)
-          for (let y = 0; y < arrayWidth; y += 1) {
-            for (let x = 0; x < arrayHeight; x += 1) {
+        function myRenderTileSetup(
+          ctx: CanvasRenderingContext2D,
+          width: number,
+          height: number,
+        ) {
+          const offsetX = 0 //allPlayers[playerid].x
+          const offsetY = 0 //allPlayers[playerid].y
+          ctx.translate(-offsetX + 5000, -offsetY + 5000)
+          ctx.clearRect(0, 0, width, height)
+          console.log({ arrayWidth, arrayHeight })
+          ctx.drawImage(imageArray[0], 0, 0)
+          for (let y = 0; y < arrayWidth; y++) {
+            for (let x = 0; x < arrayHeight; x++) {
               const pos = x + y * arrayWidth
-              if (imageArray[pos] && imageArray[pos].complete) {
+              if (imageArray[pos]?.complete) {
+                console.log(
+                  (pos % arrayWidth) * imageWidth,
+                  Math.floor(pos / arrayWidth) * imageHeight,
+                  imageArray[pos],
+                  pos,
+                  x,
+                  y,
+                )
                 ctx.drawImage(
                   imageArray[pos],
                   (pos % arrayWidth) * imageWidth,
@@ -110,182 +183,161 @@ function App() {
               }
             }
           }
-          draw()
+          // draw()
 
-          ctx.restore()
-          // Create gradient
-          const gradient = ctx.createLinearGradient(0, 0, 400, 0)
-          gradient.addColorStop(Math.random(), 'magenta')
-          gradient.addColorStop(Math.random(), 'blue')
-          gradient.addColorStop(Math.random(), 'red')
-          ctx.fillStyle = gradient
-          ctx.font = 'bold 30px verdana'
-          ctx.fillText(`SCORE: ${allPlayers[playerid].score}`, 100, 100)
-        } else {
-          ctx.save()
-          ctx.drawImage(gratiot, 0, 0, 800, 600)
-          if (!timer) {
-            timer = setInterval(() => {
-              frame = (frame + 1) % 2
-            }, 400)
-          }
-          ctx.restore()
+          // ctx.restore()
+          // // Create gradient
+          // const gradient = ctx.createLinearGradient(0, 0, 400, 0)
+          // gradient.addColorStop(Math.random(), 'magenta')
+          // gradient.addColorStop(Math.random(), 'blue')
+          // gradient.addColorStop(Math.random(), 'red')
+          // ctx.fillStyle = gradient
+          // ctx.font = 'bold 30px verdana'
+          // ctx.fillText(`SCORE: ${allPlayers[playerid].score}`, 100, 100)
+
+          // window.requestAnimationFrame(() => myRenderTileSetup(ctx))
         }
 
-        window.requestAnimationFrame(myRenderTileSetup)
-      }
-
-      async function setup() {
-        imageArray = await Promise.all(
-          new Array(25)
-            .fill(0)
-            .map(i => `${i}`.padEnd(3, '0'))
-            .map(i => `static/tiles/tile${i}.png`)
-            .map(loadImage),
-        )
-        bird[0] = loadImage('static/img/bird1.png')
-        bird[1] = loadImage('static/img/bird1.png')
-        gratiot = loadImage('static/img/gratiot.png')
-        catfood = loadImage('static/img/catfood.jpg')
-
-        window.requestAnimationFrame(myRenderTileSetup)
-      }
-
-      const movement = {
-        up: false,
-        down: false,
-        left: false,
-        right: false,
-      }
-      document.addEventListener('keydown', event => {
-        switch (event.keyCode) {
-          case 37:
-            movement.left = true
-            break
-          case 38:
-            movement.up = true
-            break
-          case 39:
-            movement.right = true
-            break
-          case 40:
-            movement.down = true
-            break
-          case 32:
-            gameStarted = true
-            break
-          default:
+        const movement = {
+          up: false,
+          down: false,
+          left: false,
+          right: false,
         }
-        if (movement.left || movement.up || movement.right || movement.down) {
-          // socket.emit('startmove')
-        }
-      })
+        document.addEventListener('keydown', event => {
+          switch (event.key) {
+            case 'ArrowLeft':
+              movement.left = true
+              break
+            case 'ArrowUp':
+              movement.up = true
+              break
+            case 'ArrowRight':
+              movement.right = true
+              break
+            case 'ArrowDown':
+              movement.down = true
+              break
 
-      document.addEventListener('keyup', event => {
-        switch (event.keyCode) {
-          case 37:
-            movement.left = false
-            break
-          case 38:
-            movement.up = false
-            break
-          case 39:
-            movement.right = false
-            break
-          case 40:
-            movement.down = false
-            break
-          default:
-        }
-        if (
-          !movement.left &&
-          !movement.up &&
-          !movement.right &&
-          !movement.down
-        ) {
-          // socket.emit('endmove')
-        }
-      })
-
-      function touchHandler(e: any) {
-        if (!gameStarted) {
-          gameStarted = true
-          return
-        }
-        if (e.touches && can) {
-          const playerX = e.touches[0].pageX - can.offsetLeft
-          const playerY = e.touches[0].pageY - can.offsetTop
-          if (playerX > 420) {
-            movement.right = true
-          }
-          if (playerX < 320) {
-            movement.left = true
-          }
-          if (playerY > 340) {
-            movement.down = true
-          }
-          if (playerY < 260) {
-            movement.up = true
+            default:
           }
           if (movement.left || movement.up || movement.right || movement.down) {
+            // socket.emit('startmove')
+          }
+        })
+
+        document.addEventListener('keyup', event => {
+          switch (event.key) {
+            case 'ArrowLeft':
+              movement.left = false
+              break
+            case 'ArrowUp':
+              movement.up = false
+              break
+            case 'ArrowRight':
+              movement.right = false
+              break
+            case 'ArrowDown':
+              movement.down = false
+              break
+            default:
+          }
+          if (
+            !movement.left &&
+            !movement.up &&
+            !movement.right &&
+            !movement.down
+          ) {
+            // socket.emit('endmove')
+          }
+        })
+
+        function touchHandler(e: any) {
+          if (e.touches && can) {
+            const playerX = e.touches[0].pageX - can.offsetLeft
+            const playerY = e.touches[0].pageY - can.offsetTop
+            if (playerX > 420) {
+              movement.right = true
+            }
+            if (playerX < 320) {
+              movement.left = true
+            }
+            if (playerY > 340) {
+              movement.down = true
+            }
+            if (playerY < 260) {
+              movement.up = true
+            }
+            if (
+              movement.left ||
+              movement.up ||
+              movement.right ||
+              movement.down
+            ) {
+              if (socket) {
+                socket.send(
+                  str({
+                    action: 'sendmessage',
+                    data: str({
+                      type: 'move',
+                      movement,
+                    }),
+                  }),
+                )
+              }
+            }
+          }
+        }
+        can.addEventListener('touchstart', touchHandler)
+        can.addEventListener('touchmove', touchHandler)
+        can.addEventListener('touchend', () => {
+          movement.right = false
+          movement.left = false
+          movement.up = false
+          movement.down = false
+        })
+
+        let imageArray = [] as HTMLImageElement[]
+        for (i = 0; i < 25; i++) {
+          const f = `${i}`.padStart(3, '0')
+          imageArray.push(await loadImage(`tiles/tile${f}.png`))
+        }
+        console.log({ imageArray })
+        bird[0] = await loadImage('img/bird1.png')
+        bird[1] = await loadImage('img/bird1.png')
+        catfood = await loadImage('img/catfood.jpg')
+
+        myRenderTileSetup(ctx, can.width, can.height)
+      } catch (e) {
+        setError(i + ' ' + e)
+      }
+    })()
+  }, [socket, gameStarted])
+
+  return !socket ? (
+    <h1>Loading...</h1>
+  ) : error ? (
+    <h1 style={{ color: 'red' }}>{`${error}`}</h1>
+  ) : (
+    <div className="container">
+      {!gameStarted ? (
+        <StartScreen
+          startGame={() => {
+            setGameStarted(true)
             socket.send(
               str({
                 action: 'sendmessage',
-                data: {
-                  type: 'move',
-                  ...movement,
-                },
+                data: { type: 'newplayer', username },
               }),
             )
-          }
-        }
-      }
-      can.addEventListener('touchstart', touchHandler)
-      can.addEventListener('touchmove', touchHandler)
-      can.addEventListener('touchend', () => {
-        movement.right = false
-        movement.left = false
-        movement.up = false
-        movement.down = false
-        // socket.emit('endmove')
-      })
-
-      await setup()
-
-      // socket.emit('new player', username)
-
-      // setInterval(() => {
-      // }, 1000 / 60)
-
-      // socket.on('initstate', data => {
-      //   playerid = data
-      // })
-
-      // // socket.on('chats', data => {})
-
-      // socket.on('chat message', msg => {})
-
-      //     socket.on('state', players => {
-      //       console.log('wow')
-      //       allPlayers = players
-      //     })
-
-      //     socket.on('catfood', c => {
-      //       allCatfood = c
-      //     })
-    })()
-  }, [])
-  return (
-    <div>
-      <div className="container">
-        <canvas
-          ref={ref}
-          width="800"
-          height="600"
-          style={{ border: '1px solid black' }}
+          }}
+          username={username}
+          setUsername={setUsername}
         />
-        <ChatMessages messages={messages} />
-      </div>
+      ) : (
+        <canvas ref={ref} width={800} height={600} />
+      )}
+      <ChatMessages messages={messages} />
       <ChatForm socket={socket} />
     </div>
   )
@@ -300,12 +352,12 @@ function ChatForm({ socket }: { socket: WebSocket }) {
         socket.send(
           str({
             action: 'sendmessage',
-            data: {
+            data: str({
               type: 'chat',
               message,
               username,
               timestamp: +Date.now(),
-            },
+            }),
           }),
         )
         setMessage('')
@@ -328,13 +380,14 @@ function ChatMessages({ messages }: { messages: Message[] }) {
       style={{
         backgroundColor: 'orange',
         color: 'green',
-        border: '1px solid black',
+        padding: 20,
         height: 600,
         width: '100%',
       }}
     >
       <h3>gratiot chat</h3>
       <div
+        id="messages"
         style={{
           display: 'flex',
           flexDirection: 'column-reverse',
@@ -351,6 +404,45 @@ function ChatMessages({ messages }: { messages: Message[] }) {
           })}
         </ul>
       </div>
+    </div>
+  )
+}
+
+function StartScreen({
+  username,
+  setUsername,
+  startGame,
+}: {
+  username: string
+  setUsername: Function
+  startGame: Function
+}) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        type="text"
+        value={username}
+        onChange={event => setUsername(event.target.value)}
+        style={{
+          fontSize: '2em',
+          left: 200,
+          top: 400,
+          position: 'absolute',
+        }}
+      />
+      <button
+        type="submit"
+        onClick={() => startGame()}
+        style={{ left: 200, top: 500, position: 'absolute', fontSize: '2em' }}
+      >
+        Start
+      </button>
+      <img
+        src="img/gratiot.png"
+        width={800}
+        height={600}
+        style={{ border: '1px solid black' }}
+      />
     </div>
   )
 }
