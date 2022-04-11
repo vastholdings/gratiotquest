@@ -18,7 +18,7 @@ function App() {
     }
 
     // player's position
-    let playerid
+    let playerid: number | undefined
     let allPlayers = {}
     let allCatfood = {}
 
@@ -35,16 +35,11 @@ function App() {
     let gratiot
     let gameStarted = false
     let timer
-    let username
-
-    if (localStorage.getItem('username') === null) {
-      username = prompt('Set a username')
-    } else {
-      username = localStorage.getItem('username')
-    }
+    const user = localStorage.getItem('username')
+    let username = user || prompt('Set a username') || ''
     localStorage.setItem('username', username)
 
-    const socket = io(window.location.origin, { path: '/socket.io' })
+    // const socket = io(window.location.origin, { path: '/socket.io' })
 
     function draw() {
       Object.keys(allPlayers).forEach(player => {
@@ -177,6 +172,7 @@ function App() {
         socket.emit('startmove')
       }
     })
+
     document.addEventListener('keyup', event => {
       switch (event.keyCode) {
         case 37:
@@ -203,7 +199,7 @@ function App() {
         gameStarted = true
         return
       }
-      if (e.touches) {
+      if (e.touches && can) {
         const playerX = e.touches[0].pageX - can.offsetLeft
         const playerY = e.touches[0].pageY - can.offsetTop
         if (playerX > 420) movement.right = true
@@ -268,37 +264,38 @@ function App() {
     })
   }, [])
   return (
-    <div className="container">
-      <canvas
-        ref={ref}
-        width="800"
-        height="600"
-        style={{ border: '1px solid black' }}
-      />
-      <div>
-        <ul
-          id="messages"
-          style={{
-            display: 'flex',
-            flexDirection: 'column-reverse',
-            backgroundColor: 'orange',
-            color: 'green',
-            border: '1px solid black',
-            height: 600,
-          }}
-        >
-          <li style={{ fontSize: 22, padding: 20, width: 800 }}>
-            gratiot chat
-          </li>
-        </ul>
+    <div>
+      <div className="container">
+        <canvas
+          ref={ref}
+          width="800"
+          height="600"
+          style={{ border: '1px solid black' }}
+        />
+        <div>
+          <ul
+            id="messages"
+            style={{
+              display: 'flex',
+              flexDirection: 'column-reverse',
+              backgroundColor: 'orange',
+              color: 'green',
+              border: '1px solid black',
+              height: 600,
+            }}
+          >
+            <li style={{ fontSize: 22, padding: 20, width: 800 }}>
+              gratiot chat
+            </li>
+          </ul>
+        </div>
       </div>
+
+      <form>
+        <input id="m" autocomplete="off" />
+        <button>Send</button>
+      </form>
     </div>
   )
 }
-
-// <form >
-//         <input id="m" autocomplete="off" />
-//         <button>Send</button>
-//       </form>
-
 export default App
