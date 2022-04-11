@@ -8,7 +8,7 @@ function str(obj: unknown) {
 
 interface Message {
   timestamp: number
-  msg: string
+  message: string
   username: string
 }
 
@@ -26,22 +26,30 @@ const host = 'wss://kp00qnm3ma.execute-api.us-east-2.amazonaws.com/Prod/'
 function App() {
   const ref = useRef<HTMLCanvasElement>(null)
   const [socket] = useState(new WebSocket(host))
-  const [value, setValue] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
+    socket.onmessage = function (event) {
+      const obj = JSON.parse(event.data)
+      if (obj.type === 'chat') {
+        setMessages([...messages, obj])
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     ;(async () => {
-      const can = ref.current
+      const can = ref.current as any
       if (!can) {
         return
       }
-      const ctx = can.getContext('2d')
+      const ctx = can.getContext('2d') as any
       if (!ctx) {
         return
       }
 
       // player's position
-      let playerid: number | undefined
+      let playerid: any
       let allPlayers = {} as any
       let allCatfood = {} as any
 
@@ -76,17 +84,10 @@ function App() {
             100,
           )
         })
+
         Object.keys(allCatfood).forEach(p => {
           ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
         })
-      }
-
-      // stackoverflow
-      function pad(input, width, z = '0') {
-        const n = `${input}`
-        return n.length >= width
-          ? n
-          : new Array(width - n.length + 1).join(z) + n
       }
 
       function myRenderTileSetup() {
@@ -138,7 +139,8 @@ function App() {
         imageArray = await Promise.all(
           new Array(25)
             .fill(0)
-            .map(i => `static/tiles/tile${pad(i, 3)}.png`)
+            .map(i => `${i}`.padEnd(3, '0'))
+            .map(i => `static/tiles/tile${i}.png`)
             .map(loadImage),
         )
         bird[0] = loadImage('static/img/bird1.png')
@@ -205,7 +207,7 @@ function App() {
         }
       })
 
-      function touchHandler(e) {
+      function touchHandler(e: any) {
         if (!gameStarted) {
           gameStarted = true
           return
@@ -218,7 +220,15 @@ function App() {
           if (playerY > 340) movement.down = true
           if (playerY < 260) movement.up = true
           if (movement.left || movement.up || movement.right || movement.down) {
-            // socket.emit('startmove')
+            socket.send(
+              str({
+                action: 'sendmessage',
+                data: {
+                  type: 'move',
+                  ...movement,
+                },
+              }),
+            )
           }
         }
       }
@@ -234,18 +244,9 @@ function App() {
 
       await setup()
 
-      socket.onmessage = function (event) {
-        const { data } = event
-        const { type, msg } = data
-        if (type === 'chat') {
-          setMessages([...messages, msg])
-        }
-      }
-
       // socket.emit('new player', username)
 
       // setInterval(() => {
-      //   socket.emit('movement', movement)
       // }, 1000 / 60)
 
       // socket.on('initstate', data => {
@@ -275,40 +276,73 @@ function App() {
           height="600"
           style={{ border: '1px solid black' }}
         />
-        <ul
-          style={{
-            display: 'flex',
-            flexDirection: 'column-reverse',
-            backgroundColor: 'orange',
-            color: 'green',
-            border: '1px solid black',
-            height: 600,
-          }}
-        >
-          <li style={{ fontSize: 22, padding: 20, width: 800 }}>
-            gratiot chat
-          </li>
-          {messages.map(msg => (
-            <li key={str(msg)}>
-              ({format(msg.timestamp, 'YYYY/MM/dd')}) {msg.username}: {msg.msg}
-            </li>
-          ))}
-        </ul>
+        <ChatMessages messages={messages} />
       </div>
+      <ChatForm socket={socket} />
+    </div>
+  )
+}
 
-      <form
-        onSubmit={event => {
-          socket.send(str({ type: 'chat message', value }))
-          event.preventDefault()
+function ChatForm({ socket }: { socket: WebSocket }) {
+  const [message, setMessage] = useState('')
+  const username = localStorage.getItem('username')
+  return (
+    <form
+      onSubmit={event => {
+        socket.send(
+          str({
+            action: 'sendmessage',
+            data: {
+              type: 'chat',
+              message,
+              username,
+              timestamp: +Date.now(),
+            },
+          }),
+        )
+        setMessage('')
+        event.preventDefault()
+      }}
+    >
+      <input
+        autoComplete="off"
+        onChange={event => setMessage(event.target.value)}
+        value={message}
+      />
+      <button>Send</button>
+    </form>
+  )
+}
+
+function ChatMessages({ messages }: { messages: Message[] }) {
+  return (
+    <div
+      style={{
+        backgroundColor: 'orange',
+        color: 'green',
+        border: '1px solid black',
+        height: 600,
+        width: '100%',
+      }}
+    >
+      <h3>gratiot chat</h3>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column-reverse',
         }}
       >
-        <input
-          autoComplete="off"
-          onChange={event => setValue(event.target.value)}
-          value={value}
-        />
-        <button>Send</button>
-      </form>
+        <ul>
+          {messages.map(msg => {
+            const { timestamp, username, message } = msg
+            return (
+              <li key={str(msg)}>
+                ({format(timestamp, 'yyyy/MM/dd')}) {username}: {message}
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </div>
   )
 }
