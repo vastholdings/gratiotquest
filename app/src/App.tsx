@@ -215,10 +215,18 @@ function App() {
         if (e.touches && can) {
           const playerX = e.touches[0].pageX - can.offsetLeft
           const playerY = e.touches[0].pageY - can.offsetTop
-          if (playerX > 420) movement.right = true
-          if (playerX < 320) movement.left = true
-          if (playerY > 340) movement.down = true
-          if (playerY < 260) movement.up = true
+          if (playerX > 420) {
+            movement.right = true
+          }
+          if (playerX < 320) {
+            movement.left = true
+          }
+          if (playerY > 340) {
+            movement.down = true
+          }
+          if (playerY < 260) {
+            movement.up = true
+          }
           if (movement.left || movement.up || movement.right || movement.down) {
             socket.send(
               str({
