@@ -1,76 +1,13 @@
 import { useRef, useEffect, useState } from 'react'
 
 import { format } from 'date-fns'
-
-function str(obj: unknown) {
-  return JSON.stringify(obj)
-}
+import { loadImage, useLocalStorage, str } from './util'
+import { getSocket } from './socket'
 
 interface Message {
   timestamp: number
   message: string
   username: string
-}
-
-async function loadImage(str: string) {
-  const img = new Image()
-  img.src = str
-  await img.decode()
-  return img
-}
-
-const SOCKET_URL = 'wss://kp00qnm3ma.execute-api.us-east-2.amazonaws.com/Prod/'
-
-let serverP: Promise<WebSocket> | undefined
-
-function getSocket() {
-  if (!serverP) {
-    serverP = new Promise<WebSocket>((resolve, reject) => {
-      const s = new WebSocket(SOCKET_URL)
-
-      s.onopen = () => {
-        console.log(
-          'socket connection is opened [state = ' + s.readyState + ']',
-        )
-        resolve(s)
-      }
-
-      s.onerror = err => {
-        console.error('socket connection error : ', err)
-        reject(err)
-      }
-    })
-  }
-  return serverP
-}
-
-// Hook
-function useLocalStorage<T>(key: string, initialValue: T) {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue
-    }
-    try {
-      const item = window.localStorage.getItem(key)
-      return item ? JSON.parse(item) : initialValue
-    } catch (error) {
-      console.log(error)
-      return initialValue
-    }
-  })
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore =
-        value instanceof Function ? value(storedValue) : value
-      setStoredValue(valueToStore)
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore))
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-  return [storedValue, setValue] as const
 }
 
 function App() {
@@ -131,6 +68,15 @@ function App() {
         const imageWidth = 2800
         const imageHeight = 1600
         const bird = [] as HTMLImageElement[]
+        let offsetX = 2000
+        let offsetY = 2000
+
+        const movement = {
+          up: false,
+          down: false,
+          left: false,
+          right: false,
+        }
 
         // function draw() {
         //   Object.keys(allPlayers).forEach(player => {
@@ -151,59 +97,62 @@ function App() {
         //     ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
         //   })
         // }
+        let dist = 10
+        let counter = 0
 
         function myRenderTileSetup(
           ctx: CanvasRenderingContext2D,
           width: number,
           height: number,
         ) {
-          const offsetX = 0 //allPlayers[playerid].x
-          const offsetY = 0 //allPlayers[playerid].y
-          ctx.translate(-offsetX + 5000, -offsetY + 5000)
+          const moving =
+            movement.left || movement.right || movement.up || movement.down
+          if (movement.left) {
+            offsetX = Math.max(0, offsetX - dist)
+          }
+          if (movement.right) {
+            offsetX += dist
+          }
+          if (movement.up) {
+            offsetY = Math.max(0, offsetY - dist)
+          }
+          if (movement.down) {
+            offsetY += dist
+          }
           ctx.clearRect(0, 0, width, height)
-          console.log({ arrayWidth, arrayHeight })
-          ctx.drawImage(imageArray[0], 0, 0)
+          ctx.save()
+          ctx.translate(-offsetX, -offsetY)
+
           for (let y = 0; y < arrayWidth; y++) {
             for (let x = 0; x < arrayHeight; x++) {
               const pos = x + y * arrayWidth
-              if (imageArray[pos]?.complete) {
-                console.log(
-                  (pos % arrayWidth) * imageWidth,
-                  Math.floor(pos / arrayWidth) * imageHeight,
-                  imageArray[pos],
-                  pos,
-                  x,
-                  y,
-                )
-                ctx.drawImage(
-                  imageArray[pos],
-                  (pos % arrayWidth) * imageWidth,
-                  Math.floor(pos / arrayWidth) * imageHeight,
-                )
-              }
+              const img = imageArray[pos]
+              const xpos = (pos % arrayWidth) * imageWidth
+              const ypos = Math.floor(pos / arrayWidth) * imageHeight
+              ctx.drawImage(img, xpos, ypos, imageWidth, imageHeight)
             }
           }
-          // draw()
 
-          // ctx.restore()
+          ctx.restore()
+
+          ctx.drawImage(bird[counter % 2], 400, 400)
           // // Create gradient
-          // const gradient = ctx.createLinearGradient(0, 0, 400, 0)
-          // gradient.addColorStop(Math.random(), 'magenta')
-          // gradient.addColorStop(Math.random(), 'blue')
-          // gradient.addColorStop(Math.random(), 'red')
-          // ctx.fillStyle = gradient
-          // ctx.font = 'bold 30px verdana'
-          // ctx.fillText(`SCORE: ${allPlayers[playerid].score}`, 100, 100)
+          const gradient = ctx.createLinearGradient(0, 0, 400, 0)
+          gradient.addColorStop(Math.random(), 'magenta')
+          gradient.addColorStop(Math.random(), 'blue')
+          gradient.addColorStop(Math.random(), 'red')
+          ctx.fillStyle = gradient
+          ctx.font = 'bold 30px verdana'
+          ctx.fillText(`SCORE: 0`, 100, 100)
 
-          // window.requestAnimationFrame(() => myRenderTileSetup(ctx))
+          window.requestAnimationFrame(() =>
+            myRenderTileSetup(ctx, width, height),
+          )
+          if (moving) {
+            counter++
+          }
         }
 
-        const movement = {
-          up: false,
-          down: false,
-          left: false,
-          right: false,
-        }
         document.addEventListener('keydown', event => {
           switch (event.key) {
             case 'ArrowLeft':
@@ -220,9 +169,6 @@ function App() {
               break
 
             default:
-          }
-          if (movement.left || movement.up || movement.right || movement.down) {
-            // socket.emit('startmove')
           }
         })
 
@@ -242,18 +188,13 @@ function App() {
               break
             default:
           }
-          if (
-            !movement.left &&
-            !movement.up &&
-            !movement.right &&
-            !movement.down
-          ) {
-            // socket.emit('endmove')
-          }
         })
 
         function touchHandler(e: any) {
-          if (e.touches && can) {
+          if (!can) {
+            return
+          }
+          if (e.touches) {
             const playerX = e.touches[0].pageX - can.offsetLeft
             const playerY = e.touches[0].pageY - can.offsetTop
             if (playerX > 420) {
@@ -267,24 +208,6 @@ function App() {
             }
             if (playerY < 260) {
               movement.up = true
-            }
-            if (
-              movement.left ||
-              movement.up ||
-              movement.right ||
-              movement.down
-            ) {
-              if (socket) {
-                socket.send(
-                  str({
-                    action: 'sendmessage',
-                    data: str({
-                      type: 'move',
-                      movement,
-                    }),
-                  }),
-                )
-              }
             }
           }
         }
@@ -303,7 +226,7 @@ function App() {
           imageArray.push(await loadImage(`tiles/tile${f}.png`))
         }
         console.log({ imageArray })
-        bird[0] = await loadImage('img/bird1.png')
+        bird[0] = await loadImage('img/bird0.png')
         bird[1] = await loadImage('img/bird1.png')
         catfood = await loadImage('img/catfood.jpg')
 
@@ -438,6 +361,7 @@ function StartScreen({
         Start
       </button>
       <img
+        alt="coverscreen"
         src="img/gratiot.png"
         width={800}
         height={600}
