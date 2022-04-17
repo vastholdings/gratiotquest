@@ -135,7 +135,7 @@ function App() {
 
           ctx.restore()
 
-          ctx.drawImage(bird[counter % 2], 400, 400)
+          ctx.drawImage(bird[Math.floor(counter) % bird.length], 400, 400)
           // // Create gradient
           const gradient = ctx.createLinearGradient(0, 0, 400, 0)
           gradient.addColorStop(Math.random(), 'magenta')
@@ -149,7 +149,7 @@ function App() {
             myRenderTileSetup(ctx, width, height),
           )
           if (moving) {
-            counter++
+            counter += 0.5
           }
         }
 
@@ -228,6 +228,7 @@ function App() {
         console.log({ imageArray })
         bird[0] = await loadImage('img/bird0.png')
         bird[1] = await loadImage('img/bird1.png')
+        bird[2] = await loadImage('img/bird2.png')
         catfood = await loadImage('img/catfood.jpg')
 
         myRenderTileSetup(ctx, can.width, can.height)
@@ -237,12 +238,17 @@ function App() {
     })()
   }, [socket, gameStarted])
 
+  console.log(username, gameStarted)
+
   return !socket ? (
     <h1>Loading...</h1>
   ) : error ? (
     <h1 style={{ color: 'red' }}>{`${error}`}</h1>
   ) : (
     <div className="container">
+      {!username ? (
+        <UsernameDialog username={username} submit={arg => setUsername(arg)} />
+      ) : null}
       {!gameStarted ? (
         <StartScreen
           startGame={() => {
@@ -254,8 +260,6 @@ function App() {
               }),
             )
           }}
-          username={username}
-          setUsername={setUsername}
         />
       ) : (
         <canvas ref={ref} width={800} height={600} />
@@ -263,6 +267,28 @@ function App() {
       <ChatMessages messages={messages} />
       <ChatForm socket={socket} />
     </div>
+  )
+}
+
+function UsernameDialog({
+  username,
+  submit,
+}: {
+  username: string
+  submit: (arg: string) => void
+}) {
+  const [user, setUser] = useState(username)
+  return (
+    <dialog open>
+      <input
+        type="text"
+        value={username}
+        onChange={event => setUser(event.target.value)}
+      />
+      <button type="submit" onClick={() => submit(user)}>
+        Start
+      </button>
+    </dialog>
   )
 }
 
@@ -331,43 +357,15 @@ function ChatMessages({ messages }: { messages: Message[] }) {
   )
 }
 
-function StartScreen({
-  username,
-  setUsername,
-  startGame,
-}: {
-  username: string
-  setUsername: Function
-  startGame: Function
-}) {
+function StartScreen({ startGame }: { startGame: Function }) {
   return (
-    <div style={{ position: 'relative' }}>
-      <input
-        type="text"
-        value={username}
-        onChange={event => setUsername(event.target.value)}
-        style={{
-          fontSize: '2em',
-          left: 200,
-          top: 400,
-          position: 'absolute',
-        }}
-      />
-      <button
-        type="submit"
-        onClick={() => startGame()}
-        style={{ left: 200, top: 500, position: 'absolute', fontSize: '2em' }}
-      >
-        Start
-      </button>
-      <img
-        alt="coverscreen"
-        src="img/gratiot.png"
-        width={800}
-        height={600}
-        style={{ border: '1px solid black' }}
-      />
-    </div>
+    <img
+      alt="coverscreen"
+      src="img/gratiot.png"
+      width={800}
+      height={600}
+      style={{ border: '1px solid black' }}
+    />
   )
 }
 export default App
