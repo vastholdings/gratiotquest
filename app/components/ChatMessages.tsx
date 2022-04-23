@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { str } from './util'
+import { str } from '../util'
 
 export interface Message {
   timestamp: number

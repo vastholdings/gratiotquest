@@ -1,4 +1,4 @@
-import { useLocalStorage } from './util'
+import { useLocalStorage } from '../util'
 export default function UsernameDialog({
   username,
   submit,

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { send } from './util'
+import { send } from '../util'
 
 export default function ChatForm({ socket }: { socket: WebSocket }) {
   const [message, setMessage] = useState('')

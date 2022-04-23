@@ -1,11 +1,11 @@
 import { useRef, useEffect, useState } from 'react'
 
-import { loadImage, send } from './util'
-import { getSocket } from './socket'
-import ChatMessages from './ChatMessages'
-import ChatForm from './ChatForm'
-import UsernameDialog from './UsernameDialog'
-import StartScreen from './StartScreen'
+import { loadImage, send } from '../util'
+import { getSocket } from '../util/socket'
+import ChatMessages from '../components/ChatMessages'
+import ChatForm from '../components/ChatForm'
+import UsernameDialog from '../components/UsernameDialog'
+import StartScreen from '../components/StartScreen'
 
 type PlayerMap = { [key: string]: Player }
 interface Player {
