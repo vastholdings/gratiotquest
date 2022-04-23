@@ -1,14 +1,11 @@
 import { useRef, useEffect, useState } from 'react'
 
-import { format } from 'date-fns'
 import { loadImage, useLocalStorage, str } from './util'
 import { getSocket } from './socket'
-
-interface Message {
-  timestamp: number
-  message: string
-  username: string
-}
+import ChatMessages, { Message } from './ChatMessages'
+import ChatForm from './ChatForm'
+import UsernameDialog from './UsernameDialog'
+import StartScreen from './StartScreen'
 
 function App() {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -17,6 +14,7 @@ function App() {
   const [error, setError] = useState<unknown>()
   const [username, setUsername] = useLocalStorage('username', '')
   const [gameStarted, setGameStarted] = useState(false)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
 
   useEffect(() => {
     if (socket) {
@@ -41,7 +39,6 @@ function App() {
 
   useEffect(() => {
     ;(async () => {
-      let i = 0
       try {
         if (!gameStarted) {
           return
@@ -62,7 +59,6 @@ function App() {
         // let allPlayers = {} as any
         // let allCatfood = {} as any
         // let counter = 0
-        let catfood: HTMLImageElement
         const arrayWidth = 5
         const arrayHeight = 5
         const imageWidth = 2800
@@ -221,19 +217,20 @@ function App() {
         })
 
         let imageArray = [] as HTMLImageElement[]
-        for (i = 0; i < 25; i++) {
+        for (let i = 0; i < 25; i++) {
           const f = `${i}`.padStart(3, '0')
           imageArray.push(await loadImage(`tiles/tile${f}.png`))
         }
-        console.log({ imageArray })
         bird[0] = await loadImage('img/bird0.png')
         bird[1] = await loadImage('img/bird1.png')
         bird[2] = await loadImage('img/bird2.png')
-        catfood = await loadImage('img/catfood.jpg')
+        console.log('here')
+        setImagesLoaded(true)
 
         myRenderTileSetup(ctx, can.width, can.height)
       } catch (e) {
-        setError(i + ' ' + e)
+        console.error(e)
+        setError(e)
       }
     })()
   }, [socket, gameStarted])
@@ -261,6 +258,8 @@ function App() {
             )
           }}
         />
+      ) : !imagesLoaded ? (
+        <h1>Loading data...</h1>
       ) : (
         <canvas ref={ref} width={800} height={600} />
       )}
@@ -270,102 +269,4 @@ function App() {
   )
 }
 
-function UsernameDialog({
-  username,
-  submit,
-}: {
-  username: string
-  submit: (arg: string) => void
-}) {
-  const [user, setUser] = useState(username)
-  return (
-    <dialog open>
-      <input
-        type="text"
-        value={username}
-        onChange={event => setUser(event.target.value)}
-      />
-      <button type="submit" onClick={() => submit(user)}>
-        Start
-      </button>
-    </dialog>
-  )
-}
-
-function ChatForm({ socket }: { socket: WebSocket }) {
-  const [message, setMessage] = useState('')
-  const username = localStorage.getItem('username')
-  return (
-    <form
-      onSubmit={event => {
-        socket.send(
-          str({
-            action: 'sendmessage',
-            data: str({
-              type: 'chat',
-              message,
-              username,
-              timestamp: +Date.now(),
-            }),
-          }),
-        )
-        setMessage('')
-        event.preventDefault()
-      }}
-    >
-      <input
-        autoComplete="off"
-        onChange={event => setMessage(event.target.value)}
-        value={message}
-      />
-      <button>Send</button>
-    </form>
-  )
-}
-
-function ChatMessages({ messages }: { messages: Message[] }) {
-  return (
-    <div
-      style={{
-        backgroundColor: 'orange',
-        color: 'green',
-        padding: 20,
-        height: 600,
-        width: '100%',
-      }}
-    >
-      <h3>gratiot chat</h3>
-      <div
-        id="messages"
-        style={{
-          display: 'flex',
-          flexDirection: 'column-reverse',
-        }}
-      >
-        <ul>
-          {messages.map(msg => {
-            const { timestamp, username, message } = msg
-            return (
-              <li key={str(msg)}>
-                ({format(timestamp, 'yyyy/MM/dd')}) {username}: {message}
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    </div>
-  )
-}
-
-function StartScreen({ startGame }: { startGame: Function }) {
-  return (
-    <img
-      alt="coverscreen"
-      src="img/gratiot.png"
-      width={800}
-      height={600}
-      style={{ border: '1px solid black' }}
-    />
-  )
-}
 export default App
