@@ -6,6 +6,7 @@ export default function ChatForm({ socket }: { socket: WebSocket }) {
   const username = localStorage.getItem('username')
   return (
     <form
+      className="chat"
       onSubmit={event => {
         send(socket, {
           type: 'chat',

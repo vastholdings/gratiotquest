@@ -11,14 +11,15 @@ export default function UsernameDialog({
     <dialog open>
       <div className="userdialog">
         <h1>Name your creature</h1>
-        <input
-          type="text"
-          value={user}
-          onChange={event => setUser(event.target.value)}
-        />
-        <button type="submit" onClick={() => submit(user)}>
-          Submit
-        </button>
+        <form onSubmit={() => submit(user)}>
+          <input
+            type="text"
+            autoFocus
+            value={user}
+            onChange={event => setUser(event.target.value)}
+          />
+          <button type="submit">Submit</button>
+        </form>
       </div>
     </dialog>
   )

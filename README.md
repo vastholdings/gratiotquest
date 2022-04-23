@@ -1,19 +1,18 @@
 # gratiot quest
 
-A socket.io and html5 canvas game. You are a pheasant and you run around and eat catfood. It is multi-player and there is a chatroom
-
-## Database
-
-    create table messages(msg text, username VARCHAR(256), created_at timestamp NOT NULL DEFAULT now());
+A websocket multiplayer canvas game. You are a pheasant and you run around and
+eat catfood. It is multi-player and there is a chatroom
 
 ## Run
 
 ```
+cd app
 yarn
-node index.js
+yarn start
 ```
 
-Starts a express/socket.io server that statically serves the contents of the `static` folder, just visit http://localhost:5000
+- v1 of the app used socket.io and an ec2 instance
+- v2 of the game uses websockets with serverless AWS services https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html
 
 ## Screenshots
 

@@ -6,18 +6,18 @@ body {
   box-sizing: border-box;
 }
 
-form {
+.chat {
   padding: 3px;
   position: fixed;
   bottom: 0;
   width: 100%;
 }
-form input {
+.chat input {
   padding: 10px;
   width: 90%;
   margin-right: 0.5%;
 }
-form button {
+.chat button {
   width: 9%;
   background: rgb(130, 224, 255);
   padding: 10px;
@@ -45,11 +45,11 @@ form button {
   .container {
     flex-direction: column;
   }
-  form input {
+  .chat input {
     height: 100px;
     background-color: green;
   }
-  form button {
+  .chat button {
     height: 100px;
   }
 }
