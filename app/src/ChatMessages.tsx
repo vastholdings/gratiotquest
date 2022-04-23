@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { str } from './util'
 
@@ -7,7 +8,24 @@ export interface Message {
   username: string
 }
 
-export default function ChatMessages({ messages }: { messages: Message[] }) {
+export default function ChatMessages({ socket }: { socket: WebSocket }) {
+  const [messages, setMessages] = useState<Message[]>([])
+
+  useEffect(() => {
+    if (!socket) {
+      return
+    }
+    function handler(event: any) {
+      const obj = JSON.parse(event.data)
+      if (obj.type === 'chat') {
+        setMessages([...messages, obj])
+      }
+    }
+    socket.addEventListener('message', handler)
+    return () => {
+      socket.removeEventListener('message', handler)
+    }
+  }, [messages, socket])
   return (
     <div
       style={{

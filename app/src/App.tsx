@@ -1,31 +1,34 @@
 import { useRef, useEffect, useState } from 'react'
 
-import { loadImage, useLocalStorage, str } from './util'
+import { loadImage, send } from './util'
 import { getSocket } from './socket'
-import ChatMessages, { Message } from './ChatMessages'
+import ChatMessages from './ChatMessages'
 import ChatForm from './ChatForm'
 import UsernameDialog from './UsernameDialog'
 import StartScreen from './StartScreen'
 
-function App() {
-  const ref = useRef<HTMLCanvasElement>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+type PlayerMap = { [key: string]: Player }
+interface Player {
+  x: number
+  y: number
+  username: string
+  frame: number
+}
+
+function drawScore(ctx: CanvasRenderingContext2D) {
+  // Create gradient
+  const gradient = ctx.createLinearGradient(0, 0, 400, 0)
+  gradient.addColorStop(Math.random(), 'magenta')
+  gradient.addColorStop(Math.random(), 'blue')
+  gradient.addColorStop(Math.random(), 'red')
+  ctx.fillStyle = gradient
+  ctx.font = 'bold 30px verdana'
+  ctx.fillText(`SCORE: 0`, 100, 100)
+}
+
+function AppLoading() {
   const [socket, setSocket] = useState<WebSocket>()
   const [error, setError] = useState<unknown>()
-  const [username, setUsername] = useLocalStorage('username', '')
-  const [gameStarted, setGameStarted] = useState(false)
-  const [imagesLoaded, setImagesLoaded] = useState(false)
-
-  useEffect(() => {
-    if (socket) {
-      socket.onmessage = function (event) {
-        const obj = JSON.parse(event.data)
-        if (obj.type === 'chat') {
-          setMessages([...messages, obj])
-        }
-      }
-    }
-  }, [messages, socket])
 
   useEffect(() => {
     ;(async () => {
@@ -36,8 +39,43 @@ function App() {
       }
     })()
   }, [])
+  return !socket ? (
+    <h1>Loading...</h1>
+  ) : error ? (
+    <h1 className="error">{`${error}`}</h1>
+  ) : (
+    <App socket={socket} />
+  )
+}
+
+function App({ socket }: { socket: WebSocket }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  const [username, setUsername] = useState('')
+  const [gameStarted, setGameStarted] = useState(false)
+  const allPlayers = useRef<PlayerMap>({})
 
   useEffect(() => {
+    function handler(event: any) {
+      const obj = JSON.parse(event.data)
+      const players = allPlayers.current
+      const { type, username } = obj
+
+      if (type === 'move') {
+        const p = (players[username] = players[username] || obj)
+        p.x = obj.x
+        p.y = obj.y
+        p.frame = obj.frame
+      }
+    }
+    socket.addEventListener('message', handler)
+
+    return () => {
+      return socket.removeEventListener('message', handler)
+    }
+  }, [socket])
+
+  useEffect(() => {
+    let requestID: number | undefined
     ;(async () => {
       try {
         if (!gameStarted) {
@@ -51,70 +89,71 @@ function App() {
         if (!ctx) {
           return
         }
-        if (!socket) {
-          return
-        }
+
         // player's position
         // let playerid: any
-        // let allPlayers = {} as any
         // let allCatfood = {} as any
-        // let counter = 0
         const arrayWidth = 5
         const arrayHeight = 5
         const imageWidth = 2800
         const imageHeight = 1600
         const bird = [] as HTMLImageElement[]
-        let offsetX = 2000
-        let offsetY = 2000
+        let offsetX = 1600 + Math.random() * 100
+        let offsetY = 300
 
-        const movement = {
+        const move = {
           up: false,
           down: false,
           left: false,
           right: false,
         }
 
-        // function draw() {
-        //   Object.keys(allPlayers).forEach(player => {
-        //     if (allPlayers[player].moving) {
-        //       allPlayers[player].frame = Math.floor((counter % 8) / 4)
-        //       counter += 1
-        //     }
-        //     ctx.drawImage(
-        //       bird[allPlayers[player].frame || 0],
-        //       allPlayers[player].x,
-        //       allPlayers[player].y,
-        //       100,
-        //       100,
-        //     )
-        //   })
+        function drawPlayers(ctx: CanvasRenderingContext2D) {
+          Object.values(allPlayers.current).forEach(player => {
+            if (player.username !== username) {
+              ctx.drawImage(
+                bird[Math.floor(player.frame) || 0],
+                player.x - offsetX + 400,
+                player.y - offsetY + 400,
+              )
+            }
+          })
+        }
 
-        //   Object.keys(allCatfood).forEach(p => {
-        //     ctx.drawImage(catfood, allCatfood[p].x, allCatfood[p].y, 20, 20)
-        //   })
-        // }
         let dist = 10
         let counter = 0
 
-        function myRenderTileSetup(
+        function draw(
           ctx: CanvasRenderingContext2D,
           width: number,
           height: number,
+          socket: WebSocket,
         ) {
-          const moving =
-            movement.left || movement.right || movement.up || movement.down
-          if (movement.left) {
+          const moving = move.left || move.right || move.up || move.down
+          if (move.left) {
             offsetX = Math.max(0, offsetX - dist)
           }
-          if (movement.right) {
+          if (move.right) {
             offsetX += dist
           }
-          if (movement.up) {
+          if (move.up) {
             offsetY = Math.max(0, offsetY - dist)
           }
-          if (movement.down) {
+          if (move.down) {
             offsetY += dist
           }
+
+          if (moving) {
+            send(socket, {
+              type: 'move',
+              username,
+              x: offsetX,
+              y: offsetY,
+              frame: counter % 2,
+            })
+            counter += 0.5
+          }
+
           ctx.clearRect(0, 0, width, height)
           ctx.save()
           ctx.translate(-offsetX, -offsetY)
@@ -132,36 +171,27 @@ function App() {
           ctx.restore()
 
           ctx.drawImage(bird[Math.floor(counter) % bird.length], 400, 400)
-          // // Create gradient
-          const gradient = ctx.createLinearGradient(0, 0, 400, 0)
-          gradient.addColorStop(Math.random(), 'magenta')
-          gradient.addColorStop(Math.random(), 'blue')
-          gradient.addColorStop(Math.random(), 'red')
-          ctx.fillStyle = gradient
-          ctx.font = 'bold 30px verdana'
-          ctx.fillText(`SCORE: 0`, 100, 100)
+          drawScore(ctx)
+          drawPlayers(ctx)
 
-          window.requestAnimationFrame(() =>
-            myRenderTileSetup(ctx, width, height),
+          requestID = requestAnimationFrame(() =>
+            draw(ctx, width, height, socket),
           )
-          if (moving) {
-            counter += 0.5
-          }
         }
 
         document.addEventListener('keydown', event => {
           switch (event.key) {
             case 'ArrowLeft':
-              movement.left = true
+              move.left = true
               break
             case 'ArrowUp':
-              movement.up = true
+              move.up = true
               break
             case 'ArrowRight':
-              movement.right = true
+              move.right = true
               break
             case 'ArrowDown':
-              movement.down = true
+              move.down = true
               break
 
             default:
@@ -171,49 +201,49 @@ function App() {
         document.addEventListener('keyup', event => {
           switch (event.key) {
             case 'ArrowLeft':
-              movement.left = false
+              move.left = false
               break
             case 'ArrowUp':
-              movement.up = false
+              move.up = false
               break
             case 'ArrowRight':
-              movement.right = false
+              move.right = false
               break
             case 'ArrowDown':
-              movement.down = false
+              move.down = false
               break
             default:
           }
         })
 
-        function touchHandler(e: any) {
+        function touchHandler(can: HTMLCanvasElement, event: TouchEvent) {
           if (!can) {
             return
           }
-          if (e.touches) {
-            const playerX = e.touches[0].pageX - can.offsetLeft
-            const playerY = e.touches[0].pageY - can.offsetTop
+          if (event.touches) {
+            const playerX = event.touches[0].pageX - can.offsetLeft
+            const playerY = event.touches[0].pageY - can.offsetTop
             if (playerX > 420) {
-              movement.right = true
+              move.right = true
             }
             if (playerX < 320) {
-              movement.left = true
+              move.left = true
             }
             if (playerY > 340) {
-              movement.down = true
+              move.down = true
             }
             if (playerY < 260) {
-              movement.up = true
+              move.up = true
             }
           }
         }
-        can.addEventListener('touchstart', touchHandler)
-        can.addEventListener('touchmove', touchHandler)
+        can.addEventListener('touchstart', event => touchHandler(can, event))
+        can.addEventListener('touchmove', event => touchHandler(can, event))
         can.addEventListener('touchend', () => {
-          movement.right = false
-          movement.left = false
-          movement.up = false
-          movement.down = false
+          move.right = false
+          move.left = false
+          move.up = false
+          move.down = false
         })
 
         let imageArray = [] as HTMLImageElement[]
@@ -224,24 +254,21 @@ function App() {
         bird[0] = await loadImage('img/bird0.png')
         bird[1] = await loadImage('img/bird1.png')
         bird[2] = await loadImage('img/bird2.png')
-        console.log('here')
-        setImagesLoaded(true)
 
-        myRenderTileSetup(ctx, can.width, can.height)
+        draw(ctx, can.width, can.height, socket)
       } catch (e) {
         console.error(e)
-        setError(e)
+      }
+
+      return () => {
+        if (requestID !== undefined) {
+          cancelAnimationFrame(requestID)
+        }
       }
     })()
-  }, [socket, gameStarted])
+  }, [socket, gameStarted, username])
 
-  console.log(username, gameStarted)
-
-  return !socket ? (
-    <h1>Loading...</h1>
-  ) : error ? (
-    <h1 style={{ color: 'red' }}>{`${error}`}</h1>
-  ) : (
+  return (
     <div className="container">
       {!username ? (
         <UsernameDialog username={username} submit={arg => setUsername(arg)} />
@@ -250,23 +277,15 @@ function App() {
         <StartScreen
           startGame={() => {
             setGameStarted(true)
-            socket.send(
-              str({
-                action: 'sendmessage',
-                data: { type: 'newplayer', username },
-              }),
-            )
           }}
         />
-      ) : !imagesLoaded ? (
-        <h1>Loading data...</h1>
       ) : (
         <canvas ref={ref} width={800} height={600} />
       )}
-      <ChatMessages messages={messages} />
+      <ChatMessages socket={socket} />
       <ChatForm socket={socket} />
     </div>
   )
 }
 
-export default App
+export default AppLoading

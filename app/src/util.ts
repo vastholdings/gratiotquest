@@ -39,3 +39,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   }
   return [storedValue, setValue] as const
 }
+
+export function send(socket: WebSocket, message: unknown) {
+  socket.send(str({ action: 'sendmessage', data: str(message) }))
+}

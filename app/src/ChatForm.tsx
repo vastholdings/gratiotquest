@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { str } from './util'
+import { send } from './util'
 
 export default function ChatForm({ socket }: { socket: WebSocket }) {
   const [message, setMessage] = useState('')
@@ -7,17 +7,12 @@ export default function ChatForm({ socket }: { socket: WebSocket }) {
   return (
     <form
       onSubmit={event => {
-        socket.send(
-          str({
-            action: 'sendmessage',
-            data: str({
-              type: 'chat',
-              message,
-              username,
-              timestamp: +Date.now(),
-            }),
-          }),
-        )
+        send(socket, {
+          type: 'chat',
+          message,
+          username,
+          timestamp: +Date.now(),
+        })
         setMessage('')
         event.preventDefault()
       }}
