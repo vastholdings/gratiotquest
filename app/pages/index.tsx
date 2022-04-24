@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 
+import Link from 'next/link'
+
 import { loadImage, send } from '../util'
 import { getSocket } from '../util/socket'
 import ChatMessages from '../components/ChatMessages'
@@ -13,6 +15,17 @@ interface Player {
   y: number
   username: string
   frame: number
+}
+
+function GearIcon() {
+  return (
+    <svg style={{ width: 24, height: 24 }} viewBox="0 0 24 24">
+      <path
+        fill="currentColor"
+        d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
+      />
+    </svg>
+  )
 }
 
 function drawScore(ctx: CanvasRenderingContext2D) {
@@ -48,11 +61,11 @@ function AppLoading() {
   )
 }
 
-function App({ socket }: { socket: WebSocket }) {
+function Game({ socket, username }: { socket: WebSocket; username: string }) {
   const ref = useRef<HTMLCanvasElement>(null)
-  const [username, setUsername] = useState('')
-  const [gameStarted, setGameStarted] = useState(false)
   const allPlayers = useRef<PlayerMap>({})
+  const offsetX = useRef(1600 + Math.random() * 100)
+  const offsetY = useRef(300)
 
   useEffect(() => {
     function handler(event: any) {
@@ -78,9 +91,6 @@ function App({ socket }: { socket: WebSocket }) {
     let requestID: number | undefined
     ;(async () => {
       try {
-        if (!gameStarted) {
-          return
-        }
         const can = ref.current
         if (!can) {
           return
@@ -98,8 +108,6 @@ function App({ socket }: { socket: WebSocket }) {
         const imageWidth = 2800
         const imageHeight = 1600
         const bird = [] as HTMLImageElement[]
-        let offsetX = 1600 + Math.random() * 100
-        let offsetY = 300
 
         const move = {
           up: false,
@@ -113,8 +121,8 @@ function App({ socket }: { socket: WebSocket }) {
             if (player.username !== username) {
               ctx.drawImage(
                 bird[Math.floor(player.frame) || 0],
-                player.x - offsetX + 400,
-                player.y - offsetY + 400,
+                player.x - offsetX.current + 400,
+                player.y - offsetY.current + 400,
               )
             }
           })
@@ -131,16 +139,16 @@ function App({ socket }: { socket: WebSocket }) {
         ) {
           const moving = move.left || move.right || move.up || move.down
           if (move.left) {
-            offsetX = Math.max(0, offsetX - dist)
+            offsetX.current = Math.max(0, offsetX.current - dist)
           }
           if (move.right) {
-            offsetX += dist
+            offsetX.current += dist
           }
           if (move.up) {
-            offsetY = Math.max(0, offsetY - dist)
+            offsetY.current = Math.max(0, offsetY.current - dist)
           }
           if (move.down) {
-            offsetY += dist
+            offsetY.current += dist
           }
 
           if (moving) {
@@ -266,7 +274,22 @@ function App({ socket }: { socket: WebSocket }) {
         }
       }
     })()
-  }, [socket, gameStarted, username])
+  }, [socket, username])
+  return (
+    <>
+      <canvas ref={ref} width={800} height={600} />
+      <Link href={`/edit?tile=1`}>
+        <a>
+          <GearIcon />
+        </a>
+      </Link>
+    </>
+  )
+}
+
+function App({ socket }: { socket: WebSocket }) {
+  const [username, setUsername] = useState('')
+  const [gameStarted, setGameStarted] = useState(false)
 
   return (
     <div className="container">
@@ -274,13 +297,9 @@ function App({ socket }: { socket: WebSocket }) {
         <UsernameDialog username={username} submit={arg => setUsername(arg)} />
       ) : null}
       {!gameStarted ? (
-        <StartScreen
-          startGame={() => {
-            setGameStarted(true)
-          }}
-        />
+        <StartScreen startGame={() => setGameStarted(true)} />
       ) : (
-        <canvas ref={ref} width={800} height={600} />
+        <Game socket={socket} username={username} />
       )}
       <ChatMessages socket={socket} />
       <ChatForm socket={socket} />
