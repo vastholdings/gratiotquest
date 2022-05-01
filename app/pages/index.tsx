@@ -158,10 +158,9 @@ function Game({ socket, username }: { socket: WebSocket; username: string }) {
 
           for (let y = 0; y < arrayWidth; y++) {
             for (let x = 0; x < arrayHeight; x++) {
-              const pos = x + y * arrayWidth
-              const img = imageArray[pos]
-              const xpos = (pos % arrayWidth) * imageWidth
-              const ypos = Math.floor(pos / arrayWidth) * imageHeight
+              const img = imageArray[x][y]
+              const xpos = x * imageWidth
+              const ypos = y * imageHeight
               ctx.drawImage(img, xpos, ypos, imageWidth, imageHeight)
             }
           }
@@ -244,10 +243,13 @@ function Game({ socket, username }: { socket: WebSocket; username: string }) {
           move.down = false
         })
 
-        let imageArray = [] as HTMLImageElement[]
-        for (let i = 0; i < 25; i++) {
-          const f = `${i}`.padStart(3, '0')
-          imageArray.push(await loadImage(`tiles/tile${f}.png`))
+        let imageArray = [] as HTMLImageElement[][]
+        for (let i = 0; i < 5; i++) {
+          const arr = []
+          for (let j = 0; j < 5; j++) {
+            arr.push(await loadImage(`tiles/gratiot_${i}_${j}.png`))
+          }
+          imageArray.push(arr)
         }
         bird[0] = await loadImage('img/bird0.png')
         bird[1] = await loadImage('img/bird1.png')
