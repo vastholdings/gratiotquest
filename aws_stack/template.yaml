@@ -17,6 +17,8 @@ Parameters:
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
 
 Resources:
+
+  # below related to https://github.com/aws-samples/simple-websockets-chat-app/
   SimpleChatWebSocket:
     Type: AWS::ApiGatewayV2::Api
     Properties:
@@ -119,7 +121,7 @@ Resources:
       CodeUri: onconnect/
       Handler: app.handler
       MemorySize: 256
-      Runtime: nodejs12.x
+      Runtime: nodejs14.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableName
@@ -140,7 +142,7 @@ Resources:
       CodeUri: ondisconnect/
       Handler: app.handler
       MemorySize: 256
-      Runtime: nodejs12.x
+      Runtime: nodejs14.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableName
@@ -161,7 +163,7 @@ Resources:
       CodeUri: sendmessage/
       Handler: app.handler
       MemorySize: 256
-      Runtime: nodejs12.x
+      Runtime: nodejs14.x
       Environment:
         Variables:
           TABLE_NAME: !Ref TableName
@@ -183,6 +185,65 @@ Resources:
       FunctionName: !Ref SendMessageFunction
       Principal: apigateway.amazonaws.com
 
+
+  ## Below adapted from https://github.com/cmdcolin/aws_serverless_photo_gallery
+  UploadRequestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/postFile/
+      Handler: app.handler
+      Runtime: nodejs14.x
+      Timeout: 3
+      MemorySize: 128
+      Environment:
+        Variables:
+          UploadBucket: !Ref S3UploadBucket
+          Password: !Ref SecretPassword
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - S3WritePolicy:
+            BucketName: !Ref S3UploadBucket
+        - Statement:
+            - Effect: Allow
+              Resource: !Sub "arn:aws:s3:::${S3UploadBucket}/"
+              Action:
+                - s3:putObjectAcl
+      Events:
+        UploadAssetAPI:
+          Type: HttpApi
+          Properties:
+            Path: /postFile
+            Method: post
+            ApiId: !Ref MyApi
+
+
+  S3UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - HEAD
+            AllowedOrigins:
+              - "*"
+  MyApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+        AllowOrigins:
+          - "*"
+
 Outputs:
   ConnectionsTableArn:
     Description: "Connections table ARN"
@@ -203,3 +264,11 @@ Outputs:
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
+
+  APIendpoint:
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com"
+
+  S3UploadBucketName:
+    Description: "S3 bucket for application uploads"
+    Value: !Ref "S3UploadBucket"
