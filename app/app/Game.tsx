@@ -1,10 +1,10 @@
 'use client'
 import { useRef, useEffect, useState } from 'react'
-import { Application, Texture, Sprite } from 'pixi.js'
+import { Application, Texture, Sprite, Assets } from 'pixi.js'
 import ErrorMessage from './ErrorMessage'
 
-const tileWidth = 32
-const tileHeight = 32
+const tileWidth = 2800
+const tileHeight = 1600
 
 const mapData = [
   [1, 2, 3],
@@ -12,14 +12,24 @@ const mapData = [
   [7, 8, 9],
 ]
 
-function createTileSprite() {
-  const arr = []
+async function createTileSprite() {
+  const arr = [] as Sprite[][]
   for (let i = 0; i < 5; i++) {
+    const arr2 = []
     for (let j = 0; j < 5; j++) {
-      arr.push(Sprite.from(Texture.from(`tiles/gratiot_${i}_${j}.png`)))
+      const texture = await Assets.load<Texture>(`tiles/gratiot_${i}_${j}.png`)
+      arr2.push(Sprite.from(texture))
     }
+    arr.push(arr2)
   }
-  return { rows: 5, cols: 5, arr }
+  return arr
+}
+
+async function createCharacterSprint() {
+  const texture = await Assets.load<Texture>('img/bird0.png')
+  const character = new Sprite(texture)
+
+  return character
 }
 
 export default function Game({
@@ -42,20 +52,29 @@ export default function Game({
         const app = new Application()
         await app.init({
           canvas: ref.current,
-          width: 800,
-          height: 600,
+          resizeTo: window,
         })
 
-        app.ticker.add(() => {
-          const { arr, rows, cols } = createTileSprite()
-          for (let y = 0; y < mapData.length; y++) {
-            for (let x = 0; x < mapData[y].length; x++) {
-              const tileSprite = arr[x * rows + y]
-              tileSprite.x = x * tileWidth
-              tileSprite.y = y * tileHeight
-              app.stage.addChild(tileSprite)
-            }
+        const arr = await createTileSprite()
+        const character = await createCharacterSprint()
+        for (let y = 0; y < mapData.length; y++) {
+          for (let x = 0; x < mapData[y].length; x++) {
+            const tileSprite = arr[x][y]
+            tileSprite.x = x * tileWidth
+            tileSprite.y = y * tileHeight
+            app.stage.addChild(tileSprite)
           }
+        }
+
+        character.anchor.set(0.5)
+
+        character.x = app.screen.width / 2
+        character.y = app.screen.height / 2
+        app.stage.addChild(character)
+        app.ticker.add(time => {
+          // app.stage.pivot.x += 10
+          // app.stage.pivot.y += 5
+          character.rotation += 0.1 * time.deltaTime
         })
       } catch (e) {
         setError(e)
@@ -63,10 +82,10 @@ export default function Game({
       }
     })()
   }, [])
-  const e = error
-  return e ? (
-    <ErrorMessage error={e} />
-  ) : (
-    <canvas width={800} height={600} ref={ref} />
+  return (
+    <>
+      {error ? <ErrorMessage error={error} /> : null}
+      <canvas ref={ref} />
+    </>
   )
 }

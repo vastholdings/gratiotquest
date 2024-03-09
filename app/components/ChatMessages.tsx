@@ -43,7 +43,6 @@ export default function ChatMessages({ socket }: { socket: WebSocket }) {
   return (
     <div
       style={{
-        padding: 20,
         height: 600,
         width: '100%',
       }}
