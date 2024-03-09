@@ -11,5 +11,9 @@
       "jsx": true
     },
     "project": "./tsconfig.json"
+  },
+  "rules": {
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/no-base-to-string": "off"
   }
 }

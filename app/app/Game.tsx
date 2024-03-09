@@ -6,6 +6,7 @@ import { loadImage, send } from '../util'
 import GearIcon from '../components/icons/Gear'
 
 type PlayerMap = Record<string, Player>
+
 interface Player {
   x: number
   y: number
@@ -22,6 +23,7 @@ function drawScore(ctx: CanvasRenderingContext2D) {
   ctx.font = 'bold 30px verdana'
   ctx.fillText(`SCORE: 0`, 100, 100)
 }
+
 export default function Game({
   socket,
   username,
@@ -161,15 +163,19 @@ export default function Game({
         document.addEventListener('keydown', event => {
           switch (event.key) {
             case 'ArrowLeft':
+              event.preventDefault()
               move.left = true
               break
             case 'ArrowUp':
+              event.preventDefault()
               move.up = true
               break
             case 'ArrowRight':
+              event.preventDefault()
               move.right = true
               break
             case 'ArrowDown':
+              event.preventDefault()
               move.down = true
               break
 
@@ -180,15 +186,19 @@ export default function Game({
         document.addEventListener('keyup', event => {
           switch (event.key) {
             case 'ArrowLeft':
+              event.preventDefault()
               move.left = false
               break
             case 'ArrowUp':
+              event.preventDefault()
               move.up = false
               break
             case 'ArrowRight':
+              event.preventDefault()
               move.right = false
               break
             case 'ArrowDown':
+              event.preventDefault()
               move.down = false
               break
             default:

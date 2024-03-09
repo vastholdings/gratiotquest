@@ -1,5 +1,6 @@
-import { getSocket } from '@/util/socket'
 import { useEffect, useState } from 'react'
+import { getSocket } from '@/util/socket'
+import App from './App'
 
 export default function AppLoading() {
   const [socket, setSocket] = useState<WebSocket>()

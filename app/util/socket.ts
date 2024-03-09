@@ -4,13 +4,11 @@ let serverP: Promise<WebSocket> | undefined
 
 export function getSocket() {
   if (!serverP) {
-    serverP = new Promise<WebSocket>((resolve, reject) => {
+    serverP = new Promise((resolve, reject) => {
       const s = new WebSocket(SOCKET_URL)
 
       s.onopen = () => {
-        console.log(
-          'socket connection is opened [state = ' + s.readyState + ']',
-        )
+        console.log('socket connection opened [state = ' + s.readyState + ']')
         resolve(s)
       }
 
