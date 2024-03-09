@@ -12,9 +12,9 @@ yarn start
 ```
 
 - v1 of the app used socket.io and an ec2 instance
-- v2 of the game uses websockets with serverless AWS services https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html
+- v2 of the game uses websockets with serverless AWS services
+  https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html
 
 ## Screenshots
 
-![](1.png)
-![](2.png)
+![](1.png) ![](2.png)
