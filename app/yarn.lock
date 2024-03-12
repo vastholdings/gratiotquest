@@ -160,6 +160,11 @@
   resolved "https://registry.yarnpkg.com/@pixi/colord/-/colord-2.9.6.tgz#7e4e7851480da6fd3cef4e331f008d60be7e1204"
   integrity sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==
 
+"@pixi/tilemap@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@pixi/tilemap/-/tilemap-4.1.0.tgz#ee14e6c95273ec25e0c3170688a982856241c29c"
+  integrity sha512-jyc5JqpvPsdsowhkX0VURSMuUd1KdZmG0+Kh11EFGhkrraEKMqTOtU32TPwJb6G0jIqT2o7ynVrG3h5WRoasIg==
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"

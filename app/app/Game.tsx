@@ -1,6 +1,13 @@
 'use client'
 import { useRef, useEffect, useState } from 'react'
-import { AnimatedSprite, Application, Texture, Sprite, Assets } from 'pixi.js'
+import {
+  AnimatedSprite,
+  Container,
+  Application,
+  Texture,
+  Sprite,
+  Assets,
+} from 'pixi.js'
 import ErrorMessage from './ErrorMessage'
 
 const tileWidth = 2800
@@ -17,7 +24,9 @@ async function createTileSprite() {
   for (let i = 0; i < 5; i++) {
     const arr2 = []
     for (let j = 0; j < 5; j++) {
-      const texture = await Assets.load<Texture>(`tiles/gratiot_${i}_${j}.png`)
+      const texture = await Assets.load<Texture>(
+        `tiles/gratiot_${i}_${j}-fs8.png`,
+      )
       arr2.push(Sprite.from(texture))
     }
     arr.push(arr2)
@@ -110,12 +119,15 @@ export default function Game({
 
         const arr = await createTileSprite()
         const character = await createCharacterSprint()
+
+        const container = new Container()
+        app.stage.addChild(container)
         for (let y = 0; y < mapData.length; y++) {
           for (let x = 0; x < mapData[y].length; x++) {
             const tileSprite = arr[x][y]
             tileSprite.x = x * tileWidth
             tileSprite.y = y * tileHeight
-            app.stage.addChild(tileSprite)
+            container.addChild(tileSprite)
           }
         }
 
@@ -137,16 +149,16 @@ export default function Game({
           }
 
           if (move.up) {
-            character.y -= 10 * time.deltaTime
+            container.y += 10 * time.deltaTime
           }
           if (move.down) {
-            character.y += 10 * time.deltaTime
+            container.y -= 10 * time.deltaTime
           }
           if (move.left) {
-            character.x -= 10 * time.deltaTime
+            container.x += 10 * time.deltaTime
           }
           if (move.right) {
-            character.x += 10 * time.deltaTime
+            container.x -= 10 * time.deltaTime
           }
         })
       } catch (e) {
