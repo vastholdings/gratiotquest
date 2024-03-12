@@ -13,12 +13,6 @@ import ErrorMessage from './ErrorMessage'
 const tileWidth = 2800
 const tileHeight = 1600
 
-const mapData = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
-]
-
 async function createTileSprite() {
   const arr = [] as Sprite[][]
   for (let i = 0; i < 5; i++) {
@@ -44,13 +38,7 @@ async function createCharacterSprint() {
   )
 }
 
-export default function Game({
-  socket,
-  username,
-}: {
-  socket: WebSocket
-  username: string
-}) {
+export default function Game() {
   const ref = useRef<HTMLCanvasElement>(null)
   const [error, setError] = useState<unknown>()
 
@@ -122,8 +110,8 @@ export default function Game({
 
         const container = new Container()
         app.stage.addChild(container)
-        for (let y = 0; y < mapData.length; y++) {
-          for (let x = 0; x < mapData[y].length; x++) {
+        for (let y = 0; y < arr.length; y++) {
+          for (let x = 0; x < arr[y].length; x++) {
             const tileSprite = arr[x][y]
             tileSprite.x = x * tileWidth
             tileSprite.y = y * tileHeight
@@ -140,8 +128,6 @@ export default function Game({
         document.addEventListener('keydown', keydown)
         document.addEventListener('keyup', keyup)
         app.ticker.add(time => {
-          // app.stage.pivot.x += 10
-          // app.stage.pivot.y += 5
           if (move.up || move.left || move.right || move.down) {
             character.play()
           } else {

@@ -18,7 +18,7 @@ export default function App({ socket }: { socket: WebSocket }) {
       {!gameStarted ? (
         <StartScreen startGame={() => setGameStarted(true)} />
       ) : (
-        <Game socket={socket} username={username} />
+        <Game />
       )}
       <ChatMessages socket={socket} />
       <ChatForm socket={socket} />
