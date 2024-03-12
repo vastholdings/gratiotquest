@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useEffect, useState } from 'react'
-import { Application, Texture, Sprite, Assets } from 'pixi.js'
+import { AnimatedSprite, Application, Texture, Sprite, Assets } from 'pixi.js'
 import ErrorMessage from './ErrorMessage'
 
 const tileWidth = 2800
@@ -26,10 +26,13 @@ async function createTileSprite() {
 }
 
 async function createCharacterSprint() {
-  const texture = await Assets.load<Texture>('img/bird0.png')
-  const character = new Sprite(texture)
-
-  return character
+  return new AnimatedSprite(
+    await Promise.all(
+      ['bird0.png', 'bird1.png', 'bird2.png'].map(e =>
+        Assets.load<Texture>(`img/${e}`),
+      ),
+    ),
+  )
 }
 
 export default function Game({
@@ -43,6 +46,56 @@ export default function Game({
   const [error, setError] = useState<unknown>()
 
   useEffect(() => {
+    const move = {
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+    }
+    function keydown(event: KeyboardEvent) {
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault()
+          move.left = true
+          break
+        case 'ArrowUp':
+          event.preventDefault()
+          move.up = true
+          break
+        case 'ArrowRight':
+          event.preventDefault()
+          move.right = true
+          break
+        case 'ArrowDown':
+          event.preventDefault()
+          move.down = true
+          break
+
+        default:
+      }
+    }
+    function keyup(event: KeyboardEvent) {
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault()
+          move.left = false
+          break
+        case 'ArrowUp':
+          event.preventDefault()
+          move.up = false
+          break
+        case 'ArrowRight':
+          event.preventDefault()
+          move.right = false
+          break
+        case 'ArrowDown':
+          event.preventDefault()
+          move.down = false
+          break
+
+        default:
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       try {
@@ -71,16 +124,40 @@ export default function Game({
         character.x = app.screen.width / 2
         character.y = app.screen.height / 2
         app.stage.addChild(character)
+
+        document.addEventListener('keydown', keydown)
+        document.addEventListener('keyup', keyup)
         app.ticker.add(time => {
           // app.stage.pivot.x += 10
           // app.stage.pivot.y += 5
-          character.rotation += 0.1 * time.deltaTime
+          if (move.up || move.left || move.right || move.down) {
+            character.play()
+          } else {
+            character.stop()
+          }
+
+          if (move.up) {
+            character.y -= 10 * time.deltaTime
+          }
+          if (move.down) {
+            character.y += 10 * time.deltaTime
+          }
+          if (move.left) {
+            character.x -= 10 * time.deltaTime
+          }
+          if (move.right) {
+            character.x += 10 * time.deltaTime
+          }
         })
       } catch (e) {
         setError(e)
         console.error(e)
       }
     })()
+    return () => {
+      document.removeEventListener('keyup', keyup)
+      document.removeEventListener('keydown', keydown)
+    }
   }, [])
   return (
     <>
