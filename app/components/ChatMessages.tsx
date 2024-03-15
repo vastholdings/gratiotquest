@@ -8,6 +8,15 @@ export interface Message {
   username: string
 }
 
+function ChatMessage({ message }: { message: Message }) {
+  const { timestamp, username, message: msg } = message
+  return (
+    <li>
+      ({format(timestamp, 'yyyy/MM/dd')}) {username}: {msg}
+    </li>
+  )
+}
+
 export default function ChatMessages({ socket }: { socket: WebSocket }) {
   const [messages, setMessages] = useState<Message[]>([])
 
@@ -15,8 +24,13 @@ export default function ChatMessages({ socket }: { socket: WebSocket }) {
     if (!socket) {
       return
     }
-    function handler(event: any) {
-      const obj = JSON.parse(event.data)
+    function handler(event: { data: string }) {
+      const obj = JSON.parse(event.data) as {
+        type: 'chat'
+        message: string
+        username: string
+        timestamp: number
+      }
       if (obj.type === 'chat') {
         setMessages([...messages, obj])
       }
@@ -29,7 +43,6 @@ export default function ChatMessages({ socket }: { socket: WebSocket }) {
   return (
     <div
       style={{
-        padding: 20,
         height: 600,
         width: '100%',
       }}
@@ -43,14 +56,9 @@ export default function ChatMessages({ socket }: { socket: WebSocket }) {
         }}
       >
         <ul>
-          {messages.map(msg => {
-            const { timestamp, username, message } = msg
-            return (
-              <li key={str(msg)}>
-                ({format(timestamp, 'yyyy/MM/dd')}) {username}: {message}
-              </li>
-            )
-          })}
+          {messages.map(msg => (
+            <ChatMessage key={str(msg)} message={msg}></ChatMessage>
+          ))}
         </ul>
       </div>
     </div>

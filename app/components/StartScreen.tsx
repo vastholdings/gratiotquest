@@ -1,8 +1,11 @@
-export default function StartScreen({ startGame }: { startGame: Function }) {
+import Image from 'next/image'
+import gratiot from './gratiot.png'
+
+export default function StartScreen({ startGame }: { startGame: () => void }) {
   return (
-    <img
+    <Image
       alt="coverscreen"
-      src="img/gratiot.png"
+      src={gratiot}
       tabIndex={-1}
       onClick={() => startGame()}
       onKeyDown={event => {
